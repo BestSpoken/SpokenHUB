@@ -7491,9 +7491,10 @@ do
                             elseif n>=1e3 then return c(("%.1fK"):format(n/1e3),"K")
                             else return tostring(math.floor(n)) end
                         end
-                        -- include traits in the gen calc so the trade entry shows
-                        -- the boosted $/s — matches what the recipient will see.
-                        local gen = calcGen(item.name, item.mutation, item.traits or {})
+                        -- use CalcGeneration for consistent results across the whole script
+                        local traitsHash2 = {}
+                        for _, t in ipairs(item.traits or {}) do traitsHash2[t] = true end
+                        local gen = CalcGeneration(item.name, item.mutation, traitsHash2)
                         if gen > 0 then sp.Cash.Text = "$"..fmt(gen).."/s" end
                     end)
                     -- viewport + animation
@@ -8184,7 +8185,9 @@ do
                             elseif n>=1e3 then return c(("%.1fK"):format(n/1e3),"K")
                             else return tostring(math.floor(n)) end
                         end
-                        local gen2 = calcGen(animalName, mutation, traits)
+                        local traitsHash4 = {}
+                        for _, t in ipairs(traits or {}) do traitsHash4[t] = true end
+                        local gen2 = CalcGeneration(animalName, mutation, traitsHash4)
                         -- always overwrite so stale template text never shows
                         sp.Cash.Text = "$"..(gen2 > 0 and fmt(gen2) or "0").."/s"
                     end)
@@ -8952,32 +8955,13 @@ do
                     local sp2 = f2:FindFirstChild("Spacer")
                     if sp2 then
                         pcall(function() sp2.Title.Text = item.name end)
-                        -- set gen/s value (mutation + trait modifiers stack additively
-                        -- the same way CalcGeneration computes it on the spawner side)
+                        -- set gen/s value using CalcGeneration for consistency
                         pcall(function()
-                            local aData = animData[item.name]
-                            if aData then
-                                local base = aData.Generation or 0
-                                local mult = 1
-                                if item.mutation and item.mutation ~= "None" then
-                                    local md = mutData[item.mutation]
-                                    if md and md.Modifier then mult = mult + md.Modifier end
-                                end
-                                local sleepy = false
-                                if item.traits then
-                                    for _, t in ipairs(item.traits) do
-                                        if t == "Sleepy" then
-                                            sleepy = true
-                                        elseif TRAIT_MULTIPLIERS[t] then
-                                            mult = mult + TRAIT_MULTIPLIERS[t]
-                                        end
-                                    end
-                                end
-                                local val = base * mult
-                                if sleepy then val = val * 0.5 end
-                                local cashLbl = sp2:FindFirstChild("Cash")
-                                if cashLbl then cashLbl.Text = "$"..fmt(val).."/s" end
-                            end
+                            local traitsHash3 = {}
+                            for _, t in ipairs(item.traits or {}) do traitsHash3[t] = true end
+                            local val = CalcGeneration(item.name, item.mutation, traitsHash3)
+                            local cashLbl = sp2:FindFirstChild("Cash")
+                            if cashLbl then cashLbl.Text = "$"..fmt(val).."/s" end
                         end)
                         -- viewport animation
                         pcall(function()
