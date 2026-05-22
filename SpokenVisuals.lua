@@ -9250,9 +9250,10 @@ UserInputService.InputBegan:Connect(function(input, processed)
 end)
 
 -- ── DEBUG: Trade Notif Trigger ────────────────────────────
--- Clones the real game's TradePrompts.Prompt frame from PlayerGui and adds it
--- via CornerNotificationController — identical to the real game's trade invite.
--- Yes button launches LaunchFakeTrade. No button dismisses. No remotes fired.
+-- Builds the SAB-style trade request toast entirely from scratch.
+-- No dependency on TradePrompts or CornerNotificationController.
+-- Matches the real game's corner notification: avatar thumbnail, "@user wants
+-- to trade with you", green YES and red NO buttons, 15-second auto-dismiss.
 local _fakeNotifOpen = false
 _triggerTradeNotif = function(overrideUsername)
     if _fakeNotifOpen then return end
@@ -9278,33 +9279,213 @@ _triggerTradeNotif = function(overrideUsername)
     end
     _fakeNotifOpen = true
 
-    local function closeNotif(remove)
+    -- Build entirely from scratch so no game GUI dependency can break it
+    local TweenService = game:GetService("TweenService")
+
+    local gui = Instance.new("ScreenGui")
+    gui.Name          = "KV_TradeNotifToast"
+    gui.ResetOnSpawn  = false
+    gui.DisplayOrder  = 999
+    gui.IgnoreGuiInset = true
+    gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    gui.Parent        = GetSafeParent()
+
+    -- ── Outer toast card (bottom-right corner, matching SAB style) ──
+    local TOAST_W, TOAST_H = 300, 90
+    local MARGIN = 16
+
+    local card = Instance.new("Frame")
+    card.Name              = "Card"
+    card.Size              = UDim2.new(0, TOAST_W, 0, TOAST_H)
+    -- start off-screen to the right, then slide in
+    card.Position          = UDim2.new(1, TOAST_W + 20, 1, -(TOAST_H + MARGIN))
+    card.BackgroundColor3  = Color3.fromRGB(30, 28, 40)
+    card.BorderSizePixel   = 0
+    card.ClipsDescendants  = false
+    card.Parent            = gui
+    local cardCorner = Instance.new("UICorner")
+    cardCorner.CornerRadius = UDim.new(0, 10)
+    cardCorner.Parent       = card
+
+    -- Accent left border bar (purple, matches SAB trade prompt)
+    local accentBar = Instance.new("Frame")
+    accentBar.Size             = UDim2.new(0, 4, 1, 0)
+    accentBar.Position         = UDim2.new(0, 0, 0, 0)
+    accentBar.BackgroundColor3 = Color3.fromRGB(108, 92, 231)
+    accentBar.BorderSizePixel  = 0
+    accentBar.Parent           = card
+    local accentCorner = Instance.new("UICorner")
+    accentCorner.CornerRadius = UDim.new(0, 10)
+    accentCorner.Parent       = accentBar
+
+    -- Avatar circle
+    local avatarFrame = Instance.new("Frame")
+    avatarFrame.Size             = UDim2.new(0, 52, 0, 52)
+    avatarFrame.Position         = UDim2.new(0, 14, 0.5, -26)
+    avatarFrame.BackgroundColor3 = Color3.fromRGB(50, 46, 70)
+    avatarFrame.BorderSizePixel  = 0
+    avatarFrame.Parent           = card
+    local avatarCorner = Instance.new("UICorner")
+    avatarCorner.CornerRadius = UDim.new(1, 0)
+    avatarCorner.Parent       = avatarFrame
+
+    local avatarImg = Instance.new("ImageLabel")
+    avatarImg.Size                  = UDim2.new(1, 0, 1, 0)
+    avatarImg.BackgroundTransparency = 1
+    avatarImg.Image                 = "rbxassetid://0"  -- fallback blank
+    avatarImg.ScaleType             = Enum.ScaleType.Crop
+    avatarImg.Parent                = avatarFrame
+    local avatarImgCorner = Instance.new("UICorner")
+    avatarImgCorner.CornerRadius = UDim.new(1, 0)
+    avatarImgCorner.Parent       = avatarImg
+
+    -- Fetch avatar thumbnail asynchronously (non-blocking)
+    task.spawn(function()
+        pcall(function()
+            local userId = game:GetService("Players"):GetUserIdFromNameAsync(username)
+            if userId then
+                local thumb, _ = game:GetService("Players"):GetUserThumbnailAsync(
+                    userId,
+                    Enum.ThumbnailType.HeadShot,
+                    Enum.ThumbnailSize.Size100x100
+                )
+                if thumb and avatarImg and avatarImg.Parent then
+                    avatarImg.Image = thumb
+                end
+            end
+        end)
+    end)
+
+    -- Text section
+    local tradeIcon = Instance.new("TextLabel")
+    tradeIcon.Size                  = UDim2.new(0, 18, 0, 18)
+    tradeIcon.Position              = UDim2.new(0, 74, 0, 12)
+    tradeIcon.BackgroundTransparency = 1
+    tradeIcon.Text                  = "🔄"
+    tradeIcon.TextSize              = 14
+    tradeIcon.Font                  = Enum.Font.GothamBold
+    tradeIcon.TextColor3            = Color3.fromRGB(108, 92, 231)
+    tradeIcon.TextXAlignment        = Enum.TextXAlignment.Left
+    tradeIcon.Parent                = card
+
+    local headerLbl = Instance.new("TextLabel")
+    headerLbl.Size                  = UDim2.new(0, TOAST_W - 100, 0, 16)
+    headerLbl.Position              = UDim2.new(0, 94, 0, 12)
+    headerLbl.BackgroundTransparency = 1
+    headerLbl.Text                  = "Trade Request"
+    headerLbl.TextSize              = 11
+    headerLbl.Font                  = Enum.Font.GothamBold
+    headerLbl.TextColor3            = Color3.fromRGB(108, 92, 231)
+    headerLbl.TextXAlignment        = Enum.TextXAlignment.Left
+    headerLbl.Parent                = card
+
+    local msgLbl = Instance.new("TextLabel")
+    msgLbl.Size                  = UDim2.new(0, TOAST_W - 100, 0, 28)
+    msgLbl.Position              = UDim2.new(0, 74, 0, 28)
+    msgLbl.BackgroundTransparency = 1
+    msgLbl.Text                  = ("@%s wants to\ntrade with you!"):format(username)
+    msgLbl.TextSize              = 11
+    msgLbl.Font                  = Enum.Font.Gotham
+    msgLbl.TextColor3            = Color3.fromRGB(220, 218, 235)
+    msgLbl.TextXAlignment        = Enum.TextXAlignment.Left
+    msgLbl.TextWrapped           = true
+    msgLbl.Parent                = card
+
+    -- YES button
+    local yesBtn = Instance.new("TextButton")
+    yesBtn.Size               = UDim2.new(0, 72, 0, 24)
+    yesBtn.Position           = UDim2.new(0, 74, 1, -32)
+    yesBtn.BackgroundColor3   = Color3.fromRGB(50, 170, 90)
+    yesBtn.BorderSizePixel    = 0
+    yesBtn.Text               = "✓  Accept"
+    yesBtn.TextSize           = 11
+    yesBtn.Font               = Enum.Font.GothamBold
+    yesBtn.TextColor3         = Color3.fromRGB(255, 255, 255)
+    yesBtn.AutoButtonColor    = false
+    yesBtn.Parent             = card
+    local yesBtnCorner = Instance.new("UICorner")
+    yesBtnCorner.CornerRadius = UDim.new(0, 6)
+    yesBtnCorner.Parent       = yesBtn
+
+    -- NO button
+    local noBtn = Instance.new("TextButton")
+    noBtn.Size               = UDim2.new(0, 60, 0, 24)
+    noBtn.Position           = UDim2.new(0, 152, 1, -32)
+    noBtn.BackgroundColor3   = Color3.fromRGB(180, 50, 50)
+    noBtn.BorderSizePixel    = 0
+    noBtn.Text               = "✕  Decline"
+    noBtn.TextSize           = 11
+    noBtn.Font               = Enum.Font.GothamBold
+    noBtn.TextColor3         = Color3.fromRGB(255, 255, 255)
+    noBtn.AutoButtonColor    = false
+    noBtn.Parent             = card
+    local noBtnCorner = Instance.new("UICorner")
+    noBtnCorner.CornerRadius = UDim.new(0, 6)
+    noBtnCorner.Parent       = noBtn
+
+    -- Timer bar (shrinks over 15 seconds like SAB's real notification)
+    local timerBg = Instance.new("Frame")
+    timerBg.Size             = UDim2.new(1, -8, 0, 3)
+    timerBg.Position         = UDim2.new(0, 4, 1, -5)
+    timerBg.BackgroundColor3 = Color3.fromRGB(50, 46, 70)
+    timerBg.BorderSizePixel  = 0
+    timerBg.Parent           = card
+    local timerBgCorner = Instance.new("UICorner")
+    timerBgCorner.CornerRadius = UDim.new(0, 2)
+    timerBgCorner.Parent       = timerBg
+
+    local timerBar = Instance.new("Frame")
+    timerBar.Size             = UDim2.new(1, 0, 1, 0)
+    timerBar.BackgroundColor3 = Color3.fromRGB(108, 92, 231)
+    timerBar.BorderSizePixel  = 0
+    timerBar.Parent           = timerBg
+    local timerBarCorner = Instance.new("UICorner")
+    timerBarCorner.CornerRadius = UDim.new(0, 2)
+    timerBarCorner.Parent       = timerBar
+
+    -- Hover effects
+    yesBtn.MouseEnter:Connect(function() yesBtn.BackgroundColor3 = Color3.fromRGB(70, 200, 110) end)
+    yesBtn.MouseLeave:Connect(function() yesBtn.BackgroundColor3 = Color3.fromRGB(50, 170, 90) end)
+    noBtn.MouseEnter:Connect(function() noBtn.BackgroundColor3 = Color3.fromRGB(220, 70, 70) end)
+    noBtn.MouseLeave:Connect(function() noBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50) end)
+
+    -- Slide-in animation
+    TweenService:Create(card, TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+        Position = UDim2.new(1, -(TOAST_W + MARGIN), 1, -(TOAST_H + MARGIN))
+    }):Play()
+
+    local dismissed = false
+    local function dismissNotif(slideOut)
+        if dismissed then return end
+        dismissed = true
         _fakeNotifOpen = false
-        if remove then pcall(remove) end
+        if slideOut then
+            local tween = TweenService:Create(card, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.In), {
+                Position = UDim2.new(1, TOAST_W + 20, 1, -(TOAST_H + MARGIN))
+            })
+            tween:Play()
+            tween.Completed:Connect(function() pcall(function() gui:Destroy() end) end)
+        else
+            pcall(function() gui:Destroy() end)
+        end
     end
 
-    pcall(function()
-        local pg = LocalPlayer.PlayerGui
-        local promptTemplate = pg:WaitForChild("TradePrompts", 5)
-        if not promptTemplate then error("no TradePrompts") end
-        local frame = promptTemplate.Prompt:Clone()
-        frame.Username.Text = ("@%s wants to trade with you"):format(username)
-        frame.Visible = true
+    -- Start the shrinking timer bar
+    TweenService:Create(timerBar, TweenInfo.new(15, Enum.EasingStyle.Linear), {
+        Size = UDim2.new(0, 0, 1, 0)
+    }):Play()
 
-        local nc = require(RS.Controllers.CornerNotificationController)
-        local removeFn = nc:Add(frame)
+    yesBtn.Activated:Connect(function()
+        dismissNotif(false)
+        LaunchFakeTrade(username, {})
+    end)
+    noBtn.Activated:Connect(function()
+        dismissNotif(true)
+    end)
 
-        frame.Yes.Activated:Connect(function()
-            closeNotif(removeFn)
-            LaunchFakeTrade(username, {})
-        end)
-        frame.No.Activated:Connect(function()
-            closeNotif(removeFn)
-        end)
-
-        task.delay(15, function()
-            if _fakeNotifOpen then closeNotif(removeFn) end
-        end)
+    -- Auto-dismiss after 15 seconds
+    task.delay(15, function()
+        dismissNotif(true)
     end)
 end
 -- Expose globally so the Trading-tab button can call it
