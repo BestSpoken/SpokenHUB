@@ -9326,11 +9326,10 @@ UserInputService.InputBegan:Connect(function(input, processed)
     end
 end)
 
--- ── DEBUG: Trade Notif Trigger ────────────────────────────
--- Builds the SAB-style trade request toast entirely from scratch.
--- No dependency on TradePrompts or CornerNotificationController.
--- Matches the real game's corner notification: avatar thumbnail, "@user wants
--- to trade with you", green YES and red NO buttons, 15-second auto-dismiss.
+-- ── TRADE REQUEST NOTIFICATION (1:1 SAB replica) ─────────
+-- Orange/red gradient card centred on screen.
+-- "Trade Request" in bold yellow, "@user wants to trade with you" in white,
+-- two wide buttons: green Accept | red Decline — exactly matching the real popup.
 local _fakeNotifOpen = false
 _triggerTradeNotif = function(overrideUsername)
     if _fakeNotifOpen then return end
@@ -9338,14 +9337,12 @@ _triggerTradeNotif = function(overrideUsername)
         SetStatus("A fake trade is already open!", Color3.fromRGB(255,100,50), 2)
         return
     end
-    -- Resolve a username: explicit arg > trade-setup form's username box > captured trade
+    -- Resolve username: explicit arg > username box in Trading tab > last captured trade
     local username = overrideUsername
     if not username or username == "" then
         local pg = LocalPlayer:FindFirstChild("PlayerGui")
         local box = pg and pg:FindFirstChild("__usernameBox", true)
-        if box and box.Text and box.Text ~= "" then
-            username = box.Text
-        end
+        if box and box.Text and box.Text ~= "" then username = box.Text end
     end
     if (not username or username == "") and _lastRealTradeCapture then
         username = _lastRealTradeCapture.username
@@ -9356,214 +9353,178 @@ _triggerTradeNotif = function(overrideUsername)
     end
     _fakeNotifOpen = true
 
-    -- Build entirely from scratch so no game GUI dependency can break it
     local TweenService = game:GetService("TweenService")
 
+    -- ── ScreenGui ──────────────────────────────────────────
     local gui = Instance.new("ScreenGui")
-    gui.Name          = "KV_TradeNotifToast"
-    gui.ResetOnSpawn  = false
-    gui.DisplayOrder  = 999
-    gui.IgnoreGuiInset = true
-    gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    gui.Parent        = GetSafeParent()
+    gui.Name            = "KV_TradeNotifToast"
+    gui.ResetOnSpawn    = false
+    gui.DisplayOrder    = 9999
+    gui.IgnoreGuiInset  = true
+    gui.ZIndexBehavior  = Enum.ZIndexBehavior.Sibling
+    gui.Parent          = GetSafeParent()
 
-    -- ── Outer toast card (bottom-right corner, matching SAB style) ──
-    local TOAST_W, TOAST_H = 300, 90
-    local MARGIN = 16
+    -- ── Dimensions (matches real SAB card proportions) ─────
+    -- Real card is roughly 260 wide × 110 tall at 1080p
+    local CARD_W = 260
+    local CARD_H = 110
+    local BTN_H  = 34
+    local PAD    = 10
 
+    -- ── Outer card — centred, orange→red gradient via gradient ──
     local card = Instance.new("Frame")
-    card.Name              = "Card"
-    card.Size              = UDim2.new(0, TOAST_W, 0, TOAST_H)
-    -- start off-screen to the right, then slide in
-    card.Position          = UDim2.new(1, TOAST_W + 20, 1, -(TOAST_H + MARGIN))
-    card.BackgroundColor3  = Color3.fromRGB(30, 28, 40)
-    card.BorderSizePixel   = 0
-    card.ClipsDescendants  = false
-    card.Parent            = gui
+    card.Name             = "Card"
+    card.Size             = UDim2.new(0, CARD_W, 0, CARD_H)
+    card.Position         = UDim2.new(0.5, -CARD_W/2, 0.5, -(CARD_H/2) - 40)
+    card.BackgroundColor3 = Color3.fromRGB(210, 90, 20)   -- base orange (gradient overlays)
+    card.BorderSizePixel  = 0
+    card.ClipsDescendants = true
+    card.Parent           = gui
+    -- Rounded corners — same radius as real SAB popup
     local cardCorner = Instance.new("UICorner")
-    cardCorner.CornerRadius = UDim.new(0, 10)
-    cardCorner.Parent       = card
+    cardCorner.CornerRadius = UDim.new(0, 8)
+    cardCorner.Parent = card
 
-    -- Accent left border bar (purple, matches SAB trade prompt)
-    local accentBar = Instance.new("Frame")
-    accentBar.Size             = UDim2.new(0, 4, 1, 0)
-    accentBar.Position         = UDim2.new(0, 0, 0, 0)
-    accentBar.BackgroundColor3 = Color3.fromRGB(108, 92, 231)
-    accentBar.BorderSizePixel  = 0
-    accentBar.Parent           = card
-    local accentCorner = Instance.new("UICorner")
-    accentCorner.CornerRadius = UDim.new(0, 10)
-    accentCorner.Parent       = accentBar
+    -- Orange → dark-red gradient (left to right, matching screenshot)
+    local grad = Instance.new("UIGradient")
+    grad.Color    = ColorSequence.new({
+        ColorSequenceKeypoint.new(0,   Color3.fromRGB(230, 120, 10)),   -- bright orange left
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(200, 60,  10)),   -- mid orange-red
+        ColorSequenceKeypoint.new(1,   Color3.fromRGB(160, 20,  10)),   -- deep red right
+    })
+    grad.Rotation = 0   -- horizontal
+    grad.Parent   = card
 
-    -- Avatar circle
-    local avatarFrame = Instance.new("Frame")
-    avatarFrame.Size             = UDim2.new(0, 52, 0, 52)
-    avatarFrame.Position         = UDim2.new(0, 14, 0.5, -26)
-    avatarFrame.BackgroundColor3 = Color3.fromRGB(50, 46, 70)
-    avatarFrame.BorderSizePixel  = 0
-    avatarFrame.Parent           = card
-    local avatarCorner = Instance.new("UICorner")
-    avatarCorner.CornerRadius = UDim.new(1, 0)
-    avatarCorner.Parent       = avatarFrame
+    -- Thin dark border stroke to match real card edge
+    local stroke = Instance.new("UIStroke")
+    stroke.Color       = Color3.fromRGB(100, 30, 5)
+    stroke.Thickness   = 2
+    stroke.Transparency = 0.2
+    stroke.Parent      = card
 
-    local avatarImg = Instance.new("ImageLabel")
-    avatarImg.Size                  = UDim2.new(1, 0, 1, 0)
-    avatarImg.BackgroundTransparency = 1
-    avatarImg.Image                 = "rbxassetid://0"  -- fallback blank
-    avatarImg.ScaleType             = Enum.ScaleType.Crop
-    avatarImg.Parent                = avatarFrame
-    local avatarImgCorner = Instance.new("UICorner")
-    avatarImgCorner.CornerRadius = UDim.new(1, 0)
-    avatarImgCorner.Parent       = avatarImg
-
-    -- Fetch avatar thumbnail asynchronously (non-blocking)
-    task.spawn(function()
-        pcall(function()
-            local userId = game:GetService("Players"):GetUserIdFromNameAsync(username)
-            if userId then
-                local thumb, _ = game:GetService("Players"):GetUserThumbnailAsync(
-                    userId,
-                    Enum.ThumbnailType.HeadShot,
-                    Enum.ThumbnailSize.Size100x100
-                )
-                if thumb and avatarImg and avatarImg.Parent then
-                    avatarImg.Image = thumb
-                end
-            end
-        end)
-    end)
-
-    -- Text section
-    local tradeIcon = Instance.new("TextLabel")
-    tradeIcon.Size                  = UDim2.new(0, 18, 0, 18)
-    tradeIcon.Position              = UDim2.new(0, 74, 0, 12)
-    tradeIcon.BackgroundTransparency = 1
-    tradeIcon.Text                  = "🔄"
-    tradeIcon.TextSize              = 14
-    tradeIcon.Font                  = Enum.Font.GothamBold
-    tradeIcon.TextColor3            = Color3.fromRGB(108, 92, 231)
-    tradeIcon.TextXAlignment        = Enum.TextXAlignment.Left
-    tradeIcon.Parent                = card
-
+    -- ── "Trade Request" header ─────────────────────────────
+    -- Bold, yellow-gold, left-aligned — exactly as seen in the screenshot
     local headerLbl = Instance.new("TextLabel")
-    headerLbl.Size                  = UDim2.new(0, TOAST_W - 100, 0, 16)
-    headerLbl.Position              = UDim2.new(0, 94, 0, 12)
+    headerLbl.Size                  = UDim2.new(1, -PAD*2, 0, 28)
+    headerLbl.Position              = UDim2.new(0, PAD, 0, 6)
     headerLbl.BackgroundTransparency = 1
     headerLbl.Text                  = "Trade Request"
-    headerLbl.TextSize              = 11
-    headerLbl.Font                  = Enum.Font.GothamBold
-    headerLbl.TextColor3            = Color3.fromRGB(108, 92, 231)
+    headerLbl.TextSize              = 18
+    headerLbl.Font                  = Enum.Font.GothamBlack
+    headerLbl.TextColor3            = Color3.fromRGB(255, 225, 50)   -- bright yellow-gold
     headerLbl.TextXAlignment        = Enum.TextXAlignment.Left
+    headerLbl.TextYAlignment        = Enum.TextYAlignment.Center
+    -- Subtle drop shadow via a second label 1px offset
+    headerLbl.TextStrokeColor3      = Color3.fromRGB(80, 20, 0)
+    headerLbl.TextStrokeTransparency = 0.4
     headerLbl.Parent                = card
 
+    -- ── "@user wants to trade with you" body text ──────────
+    -- White, slightly smaller, wraps if username is long
     local msgLbl = Instance.new("TextLabel")
-    msgLbl.Size                  = UDim2.new(0, TOAST_W - 100, 0, 28)
-    msgLbl.Position              = UDim2.new(0, 74, 0, 28)
+    msgLbl.Size                  = UDim2.new(1, -PAD*2, 0, 28)
+    msgLbl.Position              = UDim2.new(0, PAD, 0, 34)
     msgLbl.BackgroundTransparency = 1
-    msgLbl.Text                  = ("@%s wants to\ntrade with you!"):format(username)
-    msgLbl.TextSize              = 11
-    msgLbl.Font                  = Enum.Font.Gotham
-    msgLbl.TextColor3            = Color3.fromRGB(220, 218, 235)
+    msgLbl.Text                  = ("@%s wants to trade\nwith you"):format(username)
+    msgLbl.TextSize              = 13
+    msgLbl.Font                  = Enum.Font.GothamBold
+    msgLbl.TextColor3            = Color3.fromRGB(255, 255, 255)
     msgLbl.TextXAlignment        = Enum.TextXAlignment.Left
+    msgLbl.TextYAlignment        = Enum.TextYAlignment.Top
     msgLbl.TextWrapped           = true
+    msgLbl.TextStrokeColor3      = Color3.fromRGB(0, 0, 0)
+    msgLbl.TextStrokeTransparency = 0.6
     msgLbl.Parent                = card
 
-    -- YES button
-    local yesBtn = Instance.new("TextButton")
-    yesBtn.Size               = UDim2.new(0, 72, 0, 24)
-    yesBtn.Position           = UDim2.new(0, 74, 1, -32)
-    yesBtn.BackgroundColor3   = Color3.fromRGB(50, 170, 90)
-    yesBtn.BorderSizePixel    = 0
-    yesBtn.Text               = "✓  Accept"
-    yesBtn.TextSize           = 11
-    yesBtn.Font               = Enum.Font.GothamBold
-    yesBtn.TextColor3         = Color3.fromRGB(255, 255, 255)
-    yesBtn.AutoButtonColor    = false
-    yesBtn.Parent             = card
-    local yesBtnCorner = Instance.new("UICorner")
-    yesBtnCorner.CornerRadius = UDim.new(0, 6)
-    yesBtnCorner.Parent       = yesBtn
+    -- ── Button row ─────────────────────────────────────────
+    -- Two equal-width buttons spanning the full card width, small gap between
+    local BTN_Y     = CARD_H - BTN_H - PAD
+    local GAP       = 6
+    local BTN_W     = (CARD_W - PAD*2 - GAP) / 2
 
-    -- NO button
-    local noBtn = Instance.new("TextButton")
-    noBtn.Size               = UDim2.new(0, 60, 0, 24)
-    noBtn.Position           = UDim2.new(0, 152, 1, -32)
-    noBtn.BackgroundColor3   = Color3.fromRGB(180, 50, 50)
-    noBtn.BorderSizePixel    = 0
-    noBtn.Text               = "✕  Decline"
-    noBtn.TextSize           = 11
-    noBtn.Font               = Enum.Font.GothamBold
-    noBtn.TextColor3         = Color3.fromRGB(255, 255, 255)
-    noBtn.AutoButtonColor    = false
-    noBtn.Parent             = card
-    local noBtnCorner = Instance.new("UICorner")
-    noBtnCorner.CornerRadius = UDim.new(0, 6)
-    noBtnCorner.Parent       = noBtn
+    -- Accept button (green)
+    local acceptBtn = Instance.new("TextButton")
+    acceptBtn.Size             = UDim2.new(0, BTN_W, 0, BTN_H)
+    acceptBtn.Position         = UDim2.new(0, PAD, 0, BTN_Y)
+    acceptBtn.BackgroundColor3 = Color3.fromRGB(80, 185, 70)
+    acceptBtn.BorderSizePixel  = 0
+    acceptBtn.Text             = "Accept"
+    acceptBtn.TextSize         = 15
+    acceptBtn.Font             = Enum.Font.GothamBlack
+    acceptBtn.TextColor3       = Color3.fromRGB(255, 255, 255)
+    acceptBtn.AutoButtonColor  = false
+    acceptBtn.Parent           = card
+    local acCorner = Instance.new("UICorner")
+    acCorner.CornerRadius = UDim.new(0, 6)
+    acCorner.Parent = acceptBtn
+    local acStroke = Instance.new("UIStroke")
+    acStroke.Color = Color3.fromRGB(40, 120, 40); acStroke.Thickness = 1.5; acStroke.Transparency = 0.3
+    acStroke.Parent = acceptBtn
 
-    -- Timer bar (shrinks over 15 seconds like SAB's real notification)
-    local timerBg = Instance.new("Frame")
-    timerBg.Size             = UDim2.new(1, -8, 0, 3)
-    timerBg.Position         = UDim2.new(0, 4, 1, -5)
-    timerBg.BackgroundColor3 = Color3.fromRGB(50, 46, 70)
-    timerBg.BorderSizePixel  = 0
-    timerBg.Parent           = card
-    local timerBgCorner = Instance.new("UICorner")
-    timerBgCorner.CornerRadius = UDim.new(0, 2)
-    timerBgCorner.Parent       = timerBg
-
-    local timerBar = Instance.new("Frame")
-    timerBar.Size             = UDim2.new(1, 0, 1, 0)
-    timerBar.BackgroundColor3 = Color3.fromRGB(108, 92, 231)
-    timerBar.BorderSizePixel  = 0
-    timerBar.Parent           = timerBg
-    local timerBarCorner = Instance.new("UICorner")
-    timerBarCorner.CornerRadius = UDim.new(0, 2)
-    timerBarCorner.Parent       = timerBar
+    -- Decline button (red)
+    local declineBtn = Instance.new("TextButton")
+    declineBtn.Size             = UDim2.new(0, BTN_W, 0, BTN_H)
+    declineBtn.Position         = UDim2.new(0, PAD + BTN_W + GAP, 0, BTN_Y)
+    declineBtn.BackgroundColor3 = Color3.fromRGB(210, 55, 45)
+    declineBtn.BorderSizePixel  = 0
+    declineBtn.Text             = "Decline"
+    declineBtn.TextSize         = 15
+    declineBtn.Font             = Enum.Font.GothamBlack
+    declineBtn.TextColor3       = Color3.fromRGB(255, 255, 255)
+    declineBtn.AutoButtonColor  = false
+    declineBtn.Parent           = card
+    local dcCorner = Instance.new("UICorner")
+    dcCorner.CornerRadius = UDim.new(0, 6)
+    dcCorner.Parent = declineBtn
+    local dcStroke = Instance.new("UIStroke")
+    dcStroke.Color = Color3.fromRGB(130, 30, 20); dcStroke.Thickness = 1.5; dcStroke.Transparency = 0.3
+    dcStroke.Parent = declineBtn
 
     -- Hover effects
-    yesBtn.MouseEnter:Connect(function() yesBtn.BackgroundColor3 = Color3.fromRGB(70, 200, 110) end)
-    yesBtn.MouseLeave:Connect(function() yesBtn.BackgroundColor3 = Color3.fromRGB(50, 170, 90) end)
-    noBtn.MouseEnter:Connect(function() noBtn.BackgroundColor3 = Color3.fromRGB(220, 70, 70) end)
-    noBtn.MouseLeave:Connect(function() noBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50) end)
+    acceptBtn.MouseEnter:Connect(function()  acceptBtn.BackgroundColor3  = Color3.fromRGB(100, 210, 85)  end)
+    acceptBtn.MouseLeave:Connect(function()  acceptBtn.BackgroundColor3  = Color3.fromRGB(80, 185, 70)   end)
+    declineBtn.MouseEnter:Connect(function() declineBtn.BackgroundColor3 = Color3.fromRGB(235, 75, 60)   end)
+    declineBtn.MouseLeave:Connect(function() declineBtn.BackgroundColor3 = Color3.fromRGB(210, 55, 45)   end)
 
-    -- Slide-in animation
-    TweenService:Create(card, TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-        Position = UDim2.new(1, -(TOAST_W + MARGIN), 1, -(TOAST_H + MARGIN))
+    -- ── Pop-in animation (scale from 0.8 → 1, fade in) ────
+    -- Real SAB uses a quick scale-bounce pop-in from centre
+    card.Size = UDim2.new(0, CARD_W * 0.8, 0, CARD_H * 0.8)
+    card.Position = UDim2.new(0.5, -(CARD_W * 0.8)/2, 0.5, -(CARD_H * 0.8)/2 - 40)
+    TweenService:Create(card, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        Size     = UDim2.new(0, CARD_W, 0, CARD_H),
+        Position = UDim2.new(0.5, -CARD_W/2, 0.5, -CARD_H/2 - 40),
     }):Play()
 
+    -- ── Dismiss logic ──────────────────────────────────────
     local dismissed = false
-    local function dismissNotif(slideOut)
+    local function dismissNotif(instant)
         if dismissed then return end
         dismissed = true
         _fakeNotifOpen = false
-        if slideOut then
-            local tween = TweenService:Create(card, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.In), {
-                Position = UDim2.new(1, TOAST_W + 20, 1, -(TOAST_H + MARGIN))
-            })
-            tween:Play()
-            tween.Completed:Connect(function() pcall(function() gui:Destroy() end) end)
-        else
+        if instant then
             pcall(function() gui:Destroy() end)
+        else
+            -- Pop-out: scale down and fade
+            local t = TweenService:Create(card,
+                TweenInfo.new(0.15, Enum.EasingStyle.Quint, Enum.EasingDirection.In), {
+                Size     = UDim2.new(0, CARD_W * 0.75, 0, CARD_H * 0.75),
+                Position = UDim2.new(0.5, -(CARD_W*0.75)/2, 0.5, -(CARD_H*0.75)/2 - 40),
+            })
+            t:Play()
+            t.Completed:Connect(function() pcall(function() gui:Destroy() end) end)
         end
     end
 
-    -- Start the shrinking timer bar
-    TweenService:Create(timerBar, TweenInfo.new(15, Enum.EasingStyle.Linear), {
-        Size = UDim2.new(0, 0, 1, 0)
-    }):Play()
-
-    yesBtn.Activated:Connect(function()
-        dismissNotif(false)
+    acceptBtn.Activated:Connect(function()
+        dismissNotif(true)
         LaunchFakeTrade(username, {})
     end)
-    noBtn.Activated:Connect(function()
-        dismissNotif(true)
+    declineBtn.Activated:Connect(function()
+        dismissNotif(false)
     end)
 
-    -- Auto-dismiss after 15 seconds
-    task.delay(15, function()
-        dismissNotif(true)
-    end)
+    -- Auto-dismiss after 15 s (same as real SAB)
+    task.delay(15, function() dismissNotif(false) end)
 end
 -- Expose globally so the Trading-tab button can call it
 _G.KV_TriggerTradeNotif = _triggerTradeNotif
