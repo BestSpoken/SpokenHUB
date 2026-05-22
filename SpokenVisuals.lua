@@ -110,7 +110,7 @@ local MUTATION_STUDS = {
 
 -- ── DATA ─────────────────────────────────────────────────
 local ANIMALS_BY_RARITY = {
-    {rarity="OG",     names={"Skibidi Toilet","Strawberry Elephant","Headless Horseman","Meowl","John Pork"}},
+    {rarity="OG",     names={"Skibidi Toilet","Strawberry Elephant","Spyder Elephant","Headless Horseman","Meowl","John Pork"}},
     {rarity="Secret", names={"Dragon Cannelloni","Garama and Madundung","Elefanto Frigo","Signore Carapace","Fragola La La La","Love Love Bear","Hydra Dragon Cannelloni","Tang Tang Keletang","Ketchuru and Musturu","Burguro And Fryuro","La Secret Combinasion","Tictac Sahur","Cerberus","Capitano Moby","Foxini Lanternini","Antonio","Ginger Gerat","Fishino Clownino","Guerriro Digitale","Ginger Globo","Cappuccino Clownino","Griffin","La Supreme Combinasion","Arcadragon","Rosey and Teddy","Hydra Bunny","Ketupat Bros","Tirilikalika Tirilikalako","Pancake and Syrup","Cash or Card","Dragon Gingerini","Globa Steppa","Gym Bros","Money Money Bros","Dug dug dug","Digi Narwhal","Popcuru and Fizzuru","Reinito Sleighito","Los Amigos","Los Sekolahs","Los Spaghettis","Spaghetti Tualetti","Spooky and Pumpky","Ventoliero Pavonero","Quackini Snackini","Sammyni Fattini","Nacho Spyder","Rosetti Tualetti","Lavadorito Spinito","Las Sis","La Casa Boo","Fragrama and Chocrama","Cooki and Milki","Bunny and Eggy","Celestial Pegasus","Chillin Chili","Chipso and Queso","Cloverat Clapat"}},
 }
 local MUTATIONS = {"None","Gold","Diamond","Bloodrot","Rainbow","Candy","Lava","Galaxy","YinYang","Radioactive","Cursed","Divine","Cyber"}
@@ -271,9 +271,12 @@ local function MakeDraggable(frame)
 end
 
 -- ── PLOT HELPERS ─────────────────────────────────────────
--- Plot is pinned once per session: the closest plot at the FIRST spawn becomes
--- "your" plot for everything (spawning, base skins, lasers, prompts, etc.).
--- Without this, walking near another player's plot would silently re-target it.
+-- Plot is pinned once per session.
+-- Priority order when finding YOUR plot:
+--   1. A "YourBase" part/gui exists inside the plot  (game's own ownership marker)
+--   2. A PlotSign / SkinPlotSign whose text contains the local player's DisplayName
+--   3. Closest plot by proximity (original fallback — kept so solo-server still works)
+-- Once locked, the same plot is reused until it is destroyed (e.g. rejoin).
 local _lockedPlot = nil
 local function GetPlayerPlot()
     -- If we've already locked onto a plot and it still exists, keep using it.
@@ -281,8 +284,44 @@ local function GetPlayerPlot()
     _lockedPlot = nil  -- plot was destroyed (rejoin?) — re-pin
 
     local plots = workspace:FindFirstChild("Plots"); if not plots then return nil end
+
+    local myDisplayName = LocalPlayer.DisplayName
+    local myName        = LocalPlayer.Name
+
+    -- ── Pass 1: look for the game's "YourBase" ownership indicator ──────────
+    for _, plot in plots:GetChildren() do
+        -- The game adds a "YourBase" object (BillboardGui / Part) to the local
+        -- player's plot so the UI can show "YOUR BASE".
+        if plot:FindFirstChild("YourBase", true) then
+            _lockedPlot = plot
+            return plot
+        end
+    end
+
+    -- ── Pass 2: match PlotSign text to local player's name ──────────────────
+    for _, plot in plots:GetChildren() do
+        local function signMatches(sign)
+            if not sign then return false end
+            for _, desc in sign:GetDescendants() do
+                if (desc:IsA("TextLabel") or desc:IsA("TextButton") or desc:IsA("TextBox")) then
+                    local t = desc.Text or ""
+                    if t:find(myDisplayName, 1, true) or t:find(myName, 1, true) then
+                        return true
+                    end
+                end
+            end
+            return false
+        end
+        if signMatches(plot:FindFirstChild("PlotSign", true))
+        or signMatches(plot:FindFirstChild("SkinPlotSign", true)) then
+            _lockedPlot = plot
+            return plot
+        end
+    end
+
+    -- ── Pass 3: proximity fallback (original behaviour) ─────────────────────
     local char = LocalPlayer.Character
-    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    local hrp  = char and char:FindFirstChild("HumanoidRootPart")
     if not hrp then return nil end
     local best, bd = nil, math.huge
     for _, plot in plots:GetChildren() do
@@ -971,6 +1010,7 @@ local ANIMAL_DATA = {
     ["Spooky and Pumpky"] = {gen=80000000,price=25000000000},
     ["Squalanana"] = {gen=250000,price=45000000},
     ["Strawberry Elephant"] = {gen=750000000,price=750000000000},
+    ["Spyder Elephant"] = {gen=1000000000,price=325000000000},
     ["Swag Soda"] = {gen=13000000,price=1800000000},
     ["Swaggy Bros"] = {gen=40000000,price=7000000000},
     ["Tacorillo Crocodillo"] = {gen=12500000,price=1500000000},
