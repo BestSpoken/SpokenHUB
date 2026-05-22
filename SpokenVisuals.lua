@@ -124,6 +124,7 @@ local TRAITS = {
     "Chocolate","Halo","Lucky","Orange Balloon","Green Balloon","Blue Balloon",
     "Red Balloon","Pink Balloon","Rainbow Balloon","Granny","Bunny Ears",
     "Orange Egg","Green Egg","Blue Egg","Pink Egg",
+    "Bombardiro","Extinct","Crab","Tung Tung","Concert","Starfall","Zombie Tung",
 }
 
 local TRAIT_ICONS = {
@@ -155,6 +156,11 @@ local TRAIT_ICONS = {
     ["Bunny Ears"]="rbxassetid://118516289496954",["Orange Egg"]="rbxassetid://76307362192037",
     ["Green Egg"]="rbxassetid://94602857440295",["Blue Egg"]="rbxassetid://109212886335786",
     ["Pink Egg"]="rbxassetid://133939661230277",
+    -- Newer traits added post-launch
+    ["Bombardiro"]="rbxassetid://128492624823660",["Extinct"]="rbxassetid://97054765273857",
+    ["Crab"]="rbxassetid://95792785972842",["Tung Tung"]="rbxassetid://122481678742349",
+    ["Concert"]="rbxassetid://82620342632406",["Starfall"]="rbxassetid://127455440418221",
+    ["Zombie Tung"]="rbxassetid://110723387483939",
 }
 
 -- ── HELPERS ──────────────────────────────────────────────
@@ -3185,6 +3191,14 @@ local TRAIT_ICONS = {
     ["Wet"]             = "rbxassetid://78474194088770",
     ["Witch Hat"]       = "rbxassetid://123964048606874",
     ["Zombie"]          = "rbxassetid://110723387483939",
+    -- Newer traits added post-launch
+    ["Bombardiro"]      = "rbxassetid://128492624823660",
+    ["Extinct"]         = "rbxassetid://97054765273857",
+    ["Crab"]            = "rbxassetid://95792785972842",
+    ["Tung Tung"]       = "rbxassetid://122481678742349",
+    ["Concert"]         = "rbxassetid://82620342632406",
+    ["Starfall"]        = "rbxassetid://127455440418221",
+    ["Zombie Tung"]     = "rbxassetid://110723387483939",
 }
 
 local function Stroke(parent, color, thickness, trans)
@@ -7542,9 +7556,40 @@ do
                         local sa = GetSharedAnimals()
                         if sa and sa.AttachOnViewportWithOptimizations then
                             sa:AttachOnViewportWithOptimizations(item.name, sp.ViewportFrame, nil, item.mutation ~= "None" and item.mutation or nil)
+                        else
+                            -- Fallback: manually load model so picture always shows
+                            local vp3 = sp:FindFirstChild("ViewportFrame")
+                            if not vp3 then return end
+                            local ok3, tmpl3 = pcall(function() return RS.Models.Animals:FindFirstChild(item.name) end)
+                            if not ok3 or not tmpl3 then return end
+                            local cam3 = Instance.new("Camera"); vp3.CurrentCamera = cam3; cam3.Parent = vp3
+                            local wm3 = Instance.new("WorldModel", vp3)
+                            local m3 = tmpl3:Clone()
+                            pcall(ApplyMutation, m3, item.name, item.mutation)
+                            for _, v3 in m3:GetDescendants() do
+                                if v3:IsA("BasePart") then
+                                    v3.CanCollide=false; v3.CanQuery=false
+                                    v3.CanTouch=false; v3.Anchored=true; v3.CastShadow=false
+                                end
+                            end
+                            m3:PivotTo(CFrame.new(0,0,0)); m3.Parent = wm3
+                            local minY3,maxY3,maxX3,maxZ3 = math.huge,-math.huge,0,0
+                            for _, p3 in m3:GetDescendants() do
+                                if p3:IsA("BasePart") and p3.Name ~= "HumanoidRootPart" then
+                                    local sz=p3.Size; local py=p3.Position.Y
+                                    minY3=math.min(minY3,py-sz.Y*0.5); maxY3=math.max(maxY3,py+sz.Y*0.5)
+                                    maxX3=math.max(maxX3,sz.X); maxZ3=math.max(maxZ3,sz.Z)
+                                end
+                            end
+                            if minY3==math.huge then minY3=0; maxY3=2; maxX3=2; maxZ3=2 end
+                            local maxDim3 = math.max(maxX3, maxY3-minY3, maxZ3)
+                            cam3.FieldOfView = 50
+                            local DIR3 = Vector3.new(-1, 0.25, -1).Unit
+                            local dist3 = (maxDim3*0.5 / math.tan(math.rad(25))) * 0.75
+                            local lookAt3 = m3.PrimaryPart and m3.PrimaryPart.CFrame or CFrame.new(0,(maxY3+minY3)*0.5,0)
+                            cam3.CFrame = CFrame.new((lookAt3 * CFrame.new(DIR3 * (dist3 + maxDim3 * 0.5))).Position, lookAt3.Position)
                         end
                     end)
-                    -- render trait icons (matches the live-overhead Traits row)
                     pcall(function()
                         if not item.traits or #item.traits == 0 then return end
                         local traitsFrame = sp:FindFirstChild("Traits")
@@ -9008,6 +9053,38 @@ do
                             local sa = GetSharedAnimals()
                             if sa and sa.AttachOnViewportWithOptimizations then
                                 sa:AttachOnViewportWithOptimizations(item.name, sp2.ViewportFrame, nil, item.mutation ~= "None" and item.mutation or nil)
+                            else
+                                -- Fallback: manually load model into viewport so the picture always shows
+                                local vp2 = sp2:FindFirstChild("ViewportFrame")
+                                if not vp2 then return end
+                                local ok2, tmpl2 = pcall(function() return RS.Models.Animals:FindFirstChild(item.name) end)
+                                if not ok2 or not tmpl2 then return end
+                                local cam2 = Instance.new("Camera"); vp2.CurrentCamera = cam2; cam2.Parent = vp2
+                                local wm2 = Instance.new("WorldModel", vp2)
+                                local m2 = tmpl2:Clone()
+                                pcall(ApplyMutation, m2, item.name, item.mutation)
+                                for _, v2 in m2:GetDescendants() do
+                                    if v2:IsA("BasePart") then
+                                        v2.CanCollide=false; v2.CanQuery=false
+                                        v2.CanTouch=false; v2.Anchored=true; v2.CastShadow=false
+                                    end
+                                end
+                                m2:PivotTo(CFrame.new(0,0,0)); m2.Parent = wm2
+                                local minY,maxY2,maxX,maxZ = math.huge,-math.huge,0,0
+                                for _, p2 in m2:GetDescendants() do
+                                    if p2:IsA("BasePart") and p2.Name ~= "HumanoidRootPart" then
+                                        local sz=p2.Size; local py=p2.Position.Y
+                                        minY=math.min(minY,py-sz.Y*0.5); maxY2=math.max(maxY2,py+sz.Y*0.5)
+                                        maxX=math.max(maxX,sz.X); maxZ=math.max(maxZ,sz.Z)
+                                    end
+                                end
+                                if minY==math.huge then minY=0; maxY2=2; maxX=2; maxZ=2 end
+                                local maxDim = math.max(maxX, maxY2-minY, maxZ)
+                                cam2.FieldOfView = 50
+                                local DIR = Vector3.new(-1, 0.25, -1).Unit
+                                local dist = (maxDim*0.5 / math.tan(math.rad(25))) * 0.75
+                                local lookAt = m2.PrimaryPart and m2.PrimaryPart.CFrame or CFrame.new(0,(maxY2+minY)*0.5,0)
+                                cam2.CFrame = CFrame.new((lookAt * CFrame.new(DIR * (dist + maxDim * 0.5))).Position, lookAt.Position)
                             end
                         end)
                         -- render trait icons on the trade entry, mirroring the
