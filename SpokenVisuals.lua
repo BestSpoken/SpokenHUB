@@ -4554,8 +4554,39 @@ do
             SetStatus("Stand on your plot first!", Color3.fromRGB(255,150,50), 3); return
         end
 
+        -- Try common root names directly under the plot first,
+        -- then fall back to a recursive search so rotated/restructured
+        -- plots (where MainRoot is nested) still work correctly.
         local plotMainRoot = plot:FindFirstChild("MainRoot")
             or plot:FindFirstChild("Spawn")
+            or plot:FindFirstChild("MainRoot", true)   -- recursive fallback
+            or plot:FindFirstChild("Spawn", true)      -- recursive fallback
+        -- Last resort: use the Base part of the first AnimalPodium as the anchor
+        if not plotMainRoot then
+            local pods = plot:FindFirstChild("AnimalPodiums")
+            if pods then
+                local podList = pods:GetChildren()
+                table.sort(podList, function(a, b)
+                    return (tonumber(a.Name) or 0) < (tonumber(b.Name) or 0)
+                end)
+                for _, pod in ipairs(podList) do
+                    local base = pod:FindFirstChild("Base")
+                    if base and base:IsA("BasePart") then
+                        plotMainRoot = base; break
+                    end
+                    local sp = pod:FindFirstChild("Base") and pod.Base:FindFirstChild("Spawn")
+                    if sp and sp:IsA("BasePart") then
+                        plotMainRoot = sp; break
+                    end
+                end
+            end
+        end
+        -- Absolute last resort: first BasePart that is a direct child of the plot
+        if not plotMainRoot then
+            for _, child in ipairs(plot:GetChildren()) do
+                if child:IsA("BasePart") then plotMainRoot = child; break end
+            end
+        end
         if not plotMainRoot then
             SetStatus("Plot root part not found", Color3.fromRGB(255,80,80), 3); return
         end
@@ -4668,6 +4699,13 @@ do
                 end
                 virtualRootCF = CFrame.new((gMinX+gMaxX)/2, groundY, (gMinZ+gMaxZ)/2)
             end
+        end
+
+        -- Ensure virtualRootCF is always set — if no geometry could be found,
+        -- default to identity so the skin is placed directly at the plot CFrame
+        -- rather than silently staying at world origin.
+        if not virtualRootCF then
+            virtualRootCF = CFrame.new(0, 0, 0)
         end
 
         if virtualRootCF then
