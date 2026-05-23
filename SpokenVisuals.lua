@@ -325,20 +325,60 @@ local function GetPlayerPlot()
         end
     end
 
-    -- ── Pass 3: proximity fallback (original behaviour) ─────────────────────
-    local char = LocalPlayer.Character
-    local hrp  = char and char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return nil end
-    local best, bd = nil, math.huge
+    -- ── Pass 3: any SurfaceGui / BillboardGui text matching player name ─────
+    -- Catches renamed ownership markers across game updates.
     for _, plot in plots:GetChildren() do
-        local sp = plot:FindFirstChild("Spawn")
-        if sp then
-            local d = (sp.Position - hrp.Position).Magnitude
-            if d < bd then bd = d; best = plot end
+        for _, desc in plot:GetDescendants() do
+            if desc:IsA("TextLabel") or desc:IsA("TextButton") then
+                local t = desc.Text or ""
+                if t:find(myDisplayName, 1, true) or t:find(myName, 1, true) then
+                    _lockedPlot = plot
+                    return plot
+                end
+            end
         end
     end
-    if best then _lockedPlot = best end
-    return best
+
+    -- ── Pass 4: proximity fallback — find closest plot to the player ─────────
+    -- Searches AnimalPodiums spawn positions (real nest path) AND legacy
+    -- top-level "Spawn" parts so this works across game structure changes.
+    local char = LocalPlayer.Character
+    local hrp  = char and char:FindFirstChild("HumanoidRootPart")
+    if hrp then
+        local best, bd = nil, math.huge
+        for _, plot in plots:GetChildren() do
+            -- Try AnimalPodiums.[n].Base.Spawn first (current game structure)
+            local podiums = plot:FindFirstChild("AnimalPodiums")
+            if podiums then
+                for _, pod in podiums:GetChildren() do
+                    local sp = pod:FindFirstChild("Base") and pod.Base:FindFirstChild("Spawn")
+                    if sp then
+                        local d = (sp.Position - hrp.Position).Magnitude
+                        if d < bd then bd = d; best = plot end
+                        break  -- only need one spawn per plot for proximity
+                    end
+                end
+            end
+            -- Legacy / fallback: top-level Spawn part
+            local sp2 = plot:FindFirstChild("Spawn")
+            if sp2 and sp2:IsA("BasePart") then
+                local d = (sp2.Position - hrp.Position).Magnitude
+                if d < bd then bd = d; best = plot end
+            end
+        end
+        if best then _lockedPlot = best; return best end
+    end
+
+    -- ── Pass 5: last resort — return any plot that has AnimalPodiums ─────────
+    -- If the player spawned far from their plot or HRP isn't loaded yet.
+    for _, plot in plots:GetChildren() do
+        if plot:FindFirstChild("AnimalPodiums") then
+            _lockedPlot = plot
+            return plot
+        end
+    end
+
+    return nil
 end
 
 local function GetPodiumSpawns(plot)
@@ -358,6 +398,7 @@ local function GetPodiumSpawns(plot)
         end
     end
     -- cap slots by rebirth count: rebirth 0=10, rebirth 1=11, etc. up to 27
+    -- If rebirths can't be read, default to ALL available slots (never cap to 0)
     local rebirths = 0
     pcall(function()
         local ls = LocalPlayer:FindFirstChild("leaderstats")
@@ -365,7 +406,15 @@ local function GetPodiumSpawns(plot)
             rebirths = ls.Rebirths.Value or 0
         end
     end)
+    -- Fallback: try reading from player attributes if leaderstats is missing
+    if rebirths == 0 then
+        pcall(function()
+            rebirths = LocalPlayer:GetAttribute("Rebirths") or 0
+        end)
+    end
     local maxSlots = math.min(10 + rebirths, #spawns)
+    -- Safety: always expose at least all available spawns if cap logic returns 0
+    if maxSlots <= 0 then maxSlots = #spawns end
     local capped = {}
     for i = 1, maxSlots do capped[i] = spawns[i] end
     return capped
@@ -5309,11 +5358,22 @@ DoSpawn = function()
     end
     local plot=GetPlayerPlot()
     if not plot then
-        SetStatus("⚠ Could not find your plot!",Color3.fromRGB(255,80,80),3); return
+        -- Reset the lock and try once more immediately before giving up
+        _lockedPlot = nil
+        plot = GetPlayerPlot()
+        if not plot then
+            SetStatus("⚠ Can't find your plot — walk to your base and try again!",Color3.fromRGB(255,80,80),4); return
+        end
     end
     local podiumSpawns=GetPodiumSpawns(plot)
     if #podiumSpawns==0 then
-        SetStatus("⚠ No podium slots found!",Color3.fromRGB(255,80,80),3); return
+        -- AnimalPodiums may not have loaded yet — wait one frame and retry
+        task.wait(0.5)
+        plot = GetPlayerPlot()
+        podiumSpawns = plot and GetPodiumSpawns(plot) or {}
+        if #podiumSpawns==0 then
+            SetStatus("⚠ No podium slots found — make sure you're in Steal a Brainrot!",Color3.fromRGB(255,80,80),4); return
+        end
     end
     for _spawnI = 1, spawnCount do
     plot=GetPlayerPlot()
@@ -6169,6 +6229,8 @@ DoSpawn = function()
 end
 
 spawnBtn.MouseButton1Click:Connect(function()
+    -- Reset plot lock each click so a stale reference never silently blocks spawn
+    _lockedPlot = nil
     if _multiSelectMode then
         local picks = {}
         for n, on in pairs(_multiSelected) do if on then table.insert(picks, n) end end
