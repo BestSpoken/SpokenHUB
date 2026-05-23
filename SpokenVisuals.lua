@@ -5322,113 +5322,68 @@ DoSpawn = function()
     plot=GetPlayerPlot()
     podiumSpawns=GetPodiumSpawns(plot or plot)
 
-    -- find first available slot — skip slots with our fake models OR real server animals
+    -- find first available slot
     local slotIndex = nil
     local spawnPart = nil
-    -- get server AnimalPodiums to skip real occupied slots
+
+    -- get server data (empty table if Synchronizer unavailable)
     local serverPods = {}
     pcall(function()
         local ch = GetSyncChannel()
         serverPods = ch and ch:Get("AnimalPodiums") or {}
     end)
-    -- build sorted podium key list matching podiumSpawns order
-    local sortedPodiumNames = {}
-    if plot then
-        local podiums2 = plot:FindFirstChild("AnimalPodiums")
-        if podiums2 then
-            for _, pod in podiums2:GetChildren() do
-                local n = tonumber(pod.Name)
-                if n then table.insert(sortedPodiumNames, n) end
-            end
-            table.sort(sortedPodiumNames)
-        end
-    end
-    -- Helper: returns true if a REAL server-spawned animal model exists near
-    -- a spawn part. We only count models that have a Humanoid or AnimationController
-    -- (real brainrot animals always have one) AND are not our own KV fakes.
-    -- This avoids false-positives from podium parts, decorations, or NPCs.
-    local function _hasRealAnimalNear(sp)
-        -- Only use this if the Synchronizer gave us nothing useful.
-        -- If serverPods was populated at all, trust it exclusively.
-        if next(serverPods) ~= nil then return false end
-        for _, obj in ipairs(workspace:GetChildren()) do
-            if obj:IsA("Model")
-            and not obj:GetAttribute("KVSpawned")
-            and (obj:FindFirstChildWhichIsA("AnimationController", true)
-                 or obj:FindFirstChildWhichIsA("Humanoid", true))
-            then
-                local ok, pos = pcall(function() return obj:GetPivot().Position end)
-                if ok and (pos - sp.Position).Magnitude < 4 then
-                    return true
-                end
-            end
-        end
-        return false
-    end
 
-    -- if a slot override is requested (e.g. restore from save), look only at
-    -- that specific podium and skip the first-available scan.
+    -- single unified list: {key, spawn} sorted by podium number
+    local podiumSlots = {}
+    local podiums2 = plot and plot:FindFirstChild("AnimalPodiums")
+    if podiums2 then
+        for _, pod in ipairs(podiums2:GetChildren()) do
+            local key = tonumber(pod.Name)
+            if key then
+                local base = pod:FindFirstChild("Base")
+                local sp2 = base and base:FindFirstChild("Spawn")
+                if sp2 then table.insert(podiumSlots, {key=key, spawn=sp2}) end
+            end
+        end
+        table.sort(podiumSlots, function(a,b) return a.key < b.key end)
+    end
+    local rebirths2 = 0
+    pcall(function()
+        local ls = LocalPlayer:FindFirstChild("leaderstats")
+        if ls and ls:FindFirstChild("Rebirths") then rebirths2 = ls.Rebirths.Value or 0 end
+    end)
+    local maxSlots2 = math.min(10 + rebirths2, #podiumSlots)
+    local dummy_sortedPodiumNames = {}  -- kept so downstream references compile
+    -- Scan slots in order; determine start/end based on _slotOverride
+    local startIdx = 1
+    local endIdx   = maxSlots2
     if _slotOverride then
-        for i, sp in ipairs(podiumSpawns) do
-            if sortedPodiumNames[i] == _slotOverride then
-                local podiumKey = sortedPodiumNames[i]
-                local serverAnimal = podiumKey and serverPods[podiumKey]
-                local occupied = serverAnimal and serverAnimal ~= "Empty" and serverAnimal ~= false
-                if not occupied then
-                    if _hasRealAnimalNear(sp) then
-                        occupied = true
-                    end
-                end
-                if not occupied then
-                    for _, m in ipairs(spawnedModels) do
-                        if m and m.Parent and (m:GetPivot().Position - sp.Position).Magnitude < 5 then
-                            occupied = true; break
-                        end
-                    end
-                end
-                if not occupied then
-                    slotIndex = podiumKey
-                    spawnPart = sp
-                end
-                break
-            end
+        for idx, slot in ipairs(podiumSlots) do
+            if slot.key == _slotOverride then startIdx=idx; endIdx=idx; break end
         end
     end
 
-    -- fall through to first-available if no override / override slot is taken
-    if not slotIndex then
-        for i, sp in ipairs(podiumSpawns) do
-            local occupied = false
-            -- skip if real server animal is here (Synchronizer data)
-            local podiumKey = sortedPodiumNames[i]
-            if podiumKey then
-                local serverAnimal = serverPods[podiumKey]
-                -- Only treat as occupied if the server explicitly says there IS an animal
-                -- (a non-nil, non-"Empty", non-false value). nil means the slot has no data = empty.
-                if serverAnimal and serverAnimal ~= "Empty" and serverAnimal ~= false then
-                    occupied = true
+    for idx = startIdx, endIdx do
+        local slot = podiumSlots[idx]
+        if not slot then break end
+        local occupied = false
+        -- server data: occupied only if a real animal value exists
+        local serverVal = serverPods[slot.key]
+        if serverVal and serverVal ~= "Empty" and serverVal ~= false then
+            occupied = true
+        end
+        -- check our own fakes
+        if not occupied then
+            for _, m in ipairs(spawnedModels) do
+                if m and m.Parent and (m:GetPivot().Position - slot.spawn.Position).Magnitude < 5 then
+                    occupied = true; break
                 end
             end
-            -- Fallback: if Synchronizer had no data for this slot, check workspace
-            -- directly for a real (non-KV) model sitting on the spawn point.
-            if not occupied then
-                if _hasRealAnimalNear(sp) then
-                    occupied = true
-                end
-            end
-            -- skip if our fake animal is here
-            if not occupied then
-                for _, m in ipairs(spawnedModels) do
-                    if m and m.Parent and (m:GetPivot().Position - sp.Position).Magnitude < 5 then
-                        occupied = true; break
-                    end
-                end
-            end
-            if not occupied then
-                slotIndex = sortedPodiumNames[i] or i  -- use actual podium name, not array index
-                spawnPart = sp
-                break
-            end
+        end
+        if not occupied then
+            slotIndex = slot.key
+            spawnPart = slot.spawn
+            break
         end
     end
     if not slotIndex then
