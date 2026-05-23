@@ -5340,6 +5340,29 @@ DoSpawn = function()
             table.sort(sortedPodiumNames)
         end
     end
+    -- Helper: returns true if a real (server-spawned) animal model exists near
+    -- a spawn part. Used as a workspace-level fallback when the Synchronizer
+    -- channel is unavailable or returns an empty table.
+    local function _hasRealAnimalNear(sp)
+        for _, obj in ipairs(workspace:GetChildren()) do
+            if obj:IsA("Model") and not obj:GetAttribute("KVSpawned") then
+                local ok, pos = pcall(function() return obj:GetPivot().Position end)
+                if ok and (pos - sp.Position).Magnitude < 5 then
+                    return true
+                end
+            end
+        end
+        local base = sp.Parent  -- sp is Base.Spawn, so sp.Parent == Base
+        if base then
+            for _, obj in ipairs(base:GetChildren()) do
+                if obj:IsA("Model") and not obj:GetAttribute("KVSpawned") then
+                    return true
+                end
+            end
+        end
+        return false
+    end
+
     -- if a slot override is requested (e.g. restore from save), look only at
     -- that specific podium and skip the first-available scan.
     if _slotOverride then
@@ -5348,6 +5371,11 @@ DoSpawn = function()
                 local podiumKey = sortedPodiumNames[i]
                 local serverAnimal = podiumKey and serverPods[podiumKey]
                 local occupied = serverAnimal ~= nil and serverAnimal ~= "Empty"
+                if not occupied then
+                    if _hasRealAnimalNear(sp) then
+                        occupied = true
+                    end
+                end
                 if not occupied then
                     for _, m in ipairs(spawnedModels) do
                         if m and m.Parent and (m:GetPivot().Position - sp.Position).Magnitude < 5 then
@@ -5363,15 +5391,23 @@ DoSpawn = function()
             end
         end
     end
+
     -- fall through to first-available if no override / override slot is taken
     if not slotIndex then
         for i, sp in ipairs(podiumSpawns) do
             local occupied = false
-            -- skip if real server animal is here
+            -- skip if real server animal is here (Synchronizer data)
             local podiumKey = sortedPodiumNames[i]
             if podiumKey then
                 local serverAnimal = serverPods[podiumKey]
                 if serverAnimal ~= nil and serverAnimal ~= "Empty" then
+                    occupied = true
+                end
+            end
+            -- Fallback: if Synchronizer had no data for this slot, check workspace
+            -- directly for a real (non-KV) model sitting on the spawn point.
+            if not occupied then
+                if _hasRealAnimalNear(sp) then
                     occupied = true
                 end
             end
