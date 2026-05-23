@@ -325,60 +325,20 @@ local function GetPlayerPlot()
         end
     end
 
-    -- ── Pass 3: any SurfaceGui / BillboardGui text matching player name ─────
-    -- Catches renamed ownership markers across game updates.
-    for _, plot in plots:GetChildren() do
-        for _, desc in plot:GetDescendants() do
-            if desc:IsA("TextLabel") or desc:IsA("TextButton") then
-                local t = desc.Text or ""
-                if t:find(myDisplayName, 1, true) or t:find(myName, 1, true) then
-                    _lockedPlot = plot
-                    return plot
-                end
-            end
-        end
-    end
-
-    -- ── Pass 4: proximity fallback — find closest plot to the player ─────────
-    -- Searches AnimalPodiums spawn positions (real nest path) AND legacy
-    -- top-level "Spawn" parts so this works across game structure changes.
+    -- ── Pass 3: proximity fallback (original behaviour) ─────────────────────
     local char = LocalPlayer.Character
     local hrp  = char and char:FindFirstChild("HumanoidRootPart")
-    if hrp then
-        local best, bd = nil, math.huge
-        for _, plot in plots:GetChildren() do
-            -- Try AnimalPodiums.[n].Base.Spawn first (current game structure)
-            local podiums = plot:FindFirstChild("AnimalPodiums")
-            if podiums then
-                for _, pod in podiums:GetChildren() do
-                    local sp = pod:FindFirstChild("Base") and pod.Base:FindFirstChild("Spawn")
-                    if sp then
-                        local d = (sp.Position - hrp.Position).Magnitude
-                        if d < bd then bd = d; best = plot end
-                        break  -- only need one spawn per plot for proximity
-                    end
-                end
-            end
-            -- Legacy / fallback: top-level Spawn part
-            local sp2 = plot:FindFirstChild("Spawn")
-            if sp2 and sp2:IsA("BasePart") then
-                local d = (sp2.Position - hrp.Position).Magnitude
-                if d < bd then bd = d; best = plot end
-            end
-        end
-        if best then _lockedPlot = best; return best end
-    end
-
-    -- ── Pass 5: last resort — return any plot that has AnimalPodiums ─────────
-    -- If the player spawned far from their plot or HRP isn't loaded yet.
+    if not hrp then return nil end
+    local best, bd = nil, math.huge
     for _, plot in plots:GetChildren() do
-        if plot:FindFirstChild("AnimalPodiums") then
-            _lockedPlot = plot
-            return plot
+        local sp = plot:FindFirstChild("Spawn")
+        if sp then
+            local d = (sp.Position - hrp.Position).Magnitude
+            if d < bd then bd = d; best = plot end
         end
     end
-
-    return nil
+    if best then _lockedPlot = best end
+    return best
 end
 
 local function GetPodiumSpawns(plot)
@@ -398,7 +358,6 @@ local function GetPodiumSpawns(plot)
         end
     end
     -- cap slots by rebirth count: rebirth 0=10, rebirth 1=11, etc. up to 27
-    -- If rebirths can't be read, default to ALL available slots (never cap to 0)
     local rebirths = 0
     pcall(function()
         local ls = LocalPlayer:FindFirstChild("leaderstats")
@@ -406,15 +365,7 @@ local function GetPodiumSpawns(plot)
             rebirths = ls.Rebirths.Value or 0
         end
     end)
-    -- Fallback: try reading from player attributes if leaderstats is missing
-    if rebirths == 0 then
-        pcall(function()
-            rebirths = LocalPlayer:GetAttribute("Rebirths") or 0
-        end)
-    end
     local maxSlots = math.min(10 + rebirths, #spawns)
-    -- Safety: always expose at least all available spawns if cap logic returns 0
-    if maxSlots <= 0 then maxSlots = #spawns end
     local capped = {}
     for i = 1, maxSlots do capped[i] = spawns[i] end
     return capped
@@ -5358,22 +5309,11 @@ DoSpawn = function()
     end
     local plot=GetPlayerPlot()
     if not plot then
-        -- Reset the lock and try once more immediately before giving up
-        _lockedPlot = nil
-        plot = GetPlayerPlot()
-        if not plot then
-            SetStatus("⚠ Can't find your plot — walk to your base and try again!",Color3.fromRGB(255,80,80),4); return
-        end
+        SetStatus("⚠ Could not find your plot!",Color3.fromRGB(255,80,80),3); return
     end
     local podiumSpawns=GetPodiumSpawns(plot)
     if #podiumSpawns==0 then
-        -- AnimalPodiums may not have loaded yet — wait one frame and retry
-        task.wait(0.5)
-        plot = GetPlayerPlot()
-        podiumSpawns = plot and GetPodiumSpawns(plot) or {}
-        if #podiumSpawns==0 then
-            SetStatus("⚠ No podium slots found — make sure you're in Steal a Brainrot!",Color3.fromRGB(255,80,80),4); return
-        end
+        SetStatus("⚠ No podium slots found!",Color3.fromRGB(255,80,80),3); return
     end
     for _spawnI = 1, spawnCount do
     plot=GetPlayerPlot()
@@ -5382,7 +5322,7 @@ DoSpawn = function()
     -- find first available slot — skip slots with our fake models OR real server animals
     local slotIndex = nil
     local spawnPart = nil
-    -- get server AnimalPodiums to skip real occupied slots (sync channel, may be stale)
+    -- get server AnimalPodiums to skip real occupied slots
     local serverPods = {}
     pcall(function()
         local ch = GetSyncChannel()
@@ -5390,64 +5330,24 @@ DoSpawn = function()
     end)
     -- build sorted podium key list matching podiumSpawns order
     local sortedPodiumNames = {}
-    local podiumsByKey = {}   -- podiumKey -> podium Instance (for direct workspace scan)
     if plot then
         local podiums2 = plot:FindFirstChild("AnimalPodiums")
         if podiums2 then
             for _, pod in podiums2:GetChildren() do
                 local n = tonumber(pod.Name)
-                if n then
-                    table.insert(sortedPodiumNames, n)
-                    podiumsByKey[n] = pod
-                end
+                if n then table.insert(sortedPodiumNames, n) end
             end
             table.sort(sortedPodiumNames)
         end
     end
-
-    -- Helper: returns true if a real (non-KVSpawned) animal model is sitting in this podium
-    -- Uses TWO methods so at least one catches it even when the sync channel is stale:
-    --   1. Sync channel server data (fast, may be outdated on first spawn)
-    --   2. Direct workspace scan of every BasePart near the spawn position that
-    --      is NOT tagged KVSpawned (catches real brainrots placed moments ago)
-    local function IsSlotOccupiedByReal(podiumKey, spawnPos)
-        -- Method 1: sync channel
-        local serverAnimal = serverPods[podiumKey]
-        if serverAnimal ~= nil and serverAnimal ~= "Empty" then return true end
-        -- Method 2: workspace proximity scan — real brainrot models are parented
-        -- under the podium Base or workspace and are NOT tagged KVSpawned
-        local pod = podiumsByKey[podiumKey]
-        if pod then
-            local base = pod:FindFirstChild("Base")
-            if base then
-                for _, child in base:GetChildren() do
-                    if child:IsA("Model") and not child:GetAttribute("KVSpawned") then
-                        return true
-                    end
-                end
-            end
-        end
-        -- Method 3: position proximity scan for any non-KV model near the spawn
-        if spawnPos then
-            for _, obj in workspace:GetChildren() do
-                if obj:IsA("Model") and not obj:GetAttribute("KVSpawned") then
-                    local pp = obj.PrimaryPart
-                    if pp and (pp.Position - spawnPos).Magnitude < 4 then
-                        return true
-                    end
-                end
-            end
-        end
-        return false
-    end
-
     -- if a slot override is requested (e.g. restore from save), look only at
     -- that specific podium and skip the first-available scan.
     if _slotOverride then
         for i, sp in ipairs(podiumSpawns) do
             if sortedPodiumNames[i] == _slotOverride then
                 local podiumKey = sortedPodiumNames[i]
-                local occupied = IsSlotOccupiedByReal(podiumKey, sp.Position)
+                local serverAnimal = podiumKey and serverPods[podiumKey]
+                local occupied = serverAnimal ~= nil and serverAnimal ~= "Empty"
                 if not occupied then
                     for _, m in ipairs(spawnedModels) do
                         if m and m.Parent and (m:GetPivot().Position - sp.Position).Magnitude < 5 then
@@ -5467,10 +5367,13 @@ DoSpawn = function()
     if not slotIndex then
         for i, sp in ipairs(podiumSpawns) do
             local occupied = false
+            -- skip if real server animal is here
             local podiumKey = sortedPodiumNames[i]
-            -- skip if real server animal is here (triple-check with workspace scan)
-            if podiumKey and IsSlotOccupiedByReal(podiumKey, sp.Position) then
-                occupied = true
+            if podiumKey then
+                local serverAnimal = serverPods[podiumKey]
+                if serverAnimal ~= nil and serverAnimal ~= "Empty" then
+                    occupied = true
+                end
             end
             -- skip if our fake animal is here
             if not occupied then
@@ -5481,7 +5384,7 @@ DoSpawn = function()
                 end
             end
             if not occupied then
-                slotIndex = sortedPodiumNames[i] or i
+                slotIndex = sortedPodiumNames[i] or i  -- use actual podium name, not array index
                 spawnPart = sp
                 break
             end
@@ -6229,8 +6132,6 @@ DoSpawn = function()
 end
 
 spawnBtn.MouseButton1Click:Connect(function()
-    -- Reset plot lock each click so a stale reference never silently blocks spawn
-    _lockedPlot = nil
     if _multiSelectMode then
         local picks = {}
         for n, on in pairs(_multiSelected) do if on then table.insert(picks, n) end end
@@ -6697,75 +6598,13 @@ do
     dupeKeyBtn.Activated:Connect(function() if dkListening then dkStop(false) else dkStart() end end)
     end -- dupeKey row scope
 
-    -- ── "Dupe Now" instant button ─────────────────────────
-    -- Clicking this immediately dupes whatever was received in the last real
-    -- trade — no hotkey needed.  Works whenever _lastReceivedItems is set,
-    -- i.e. after someone trades you something in a real trade.
-    do
-    local dupeNowRow = New("Frame", {
-        Size=UDim2.new(1,0,0,42), BackgroundColor3=Color3.fromRGB(24,24,32),
-        BorderSizePixel=0, LayoutOrder=4, Parent=keysContent,
-    })
-    Corner(dupeNowRow, 6); Stroke(dupeNowRow, Color3.fromRGB(50,50,70), 1, 0.3)
-    New("TextLabel", {
-        Size=UDim2.new(0.58,-10,1,0), Position=UDim2.new(0,10,0,0),
-        BackgroundTransparency=1,
-        Text="Dupe Last Pet",
-        TextColor3=Color3.fromRGB(220,220,230), Font=Enum.Font.Gotham,
-        TextSize=12, TextXAlignment=Enum.TextXAlignment.Left, Parent=dupeNowRow,
-    })
-    local dupeNowStatusLbl = New("TextLabel", {
-        Size=UDim2.new(0.42,-160,1,0), Position=UDim2.new(0.58,0,0,0),
-        BackgroundTransparency=1,
-        Text="No trade yet",
-        TextColor3=Color3.fromRGB(140,140,160), Font=Enum.Font.Gotham,
-        TextSize=10, TextXAlignment=Enum.TextXAlignment.Left,
-        TextTruncate=Enum.TextTruncate.AtEnd, Parent=dupeNowRow,
-    })
-    local dupeNowBtn = New("TextButton", {
-        Size=UDim2.new(0,110,0,26), Position=UDim2.new(1,-120,0.5,-13),
-        BackgroundColor3=Color3.fromRGB(80,185,70), BorderSizePixel=0,
-        AutoButtonColor=false,
-        Text="⧉  Dupe Now",
-        TextColor3=Color3.fromRGB(255,255,255),
-        Font=Enum.Font.GothamBold, TextSize=12, Parent=dupeNowRow,
-    })
-    Corner(dupeNowBtn, 5)
-    -- Keep the status label and button colour in sync with trade data
-    local function refreshDupeNow()
-        local items = (_lastReceivedItems and #_lastReceivedItems > 0) and _lastReceivedItems or nil
-        if (not items) and _lastReceivedItem then items = { _lastReceivedItem } end
-        if items and #items > 0 then
-            local names = {}
-            for _, it in ipairs(items) do table.insert(names, it.name) end
-            dupeNowStatusLbl.Text = table.concat(names, ", ")
-            dupeNowStatusLbl.TextColor3 = Color3.fromRGB(100,220,100)
-            dupeNowBtn.BackgroundColor3 = Color3.fromRGB(80,185,70)
-        else
-            dupeNowStatusLbl.Text = "No trade yet"
-            dupeNowStatusLbl.TextColor3 = Color3.fromRGB(140,140,160)
-            dupeNowBtn.BackgroundColor3 = Color3.fromRGB(60,60,80)
-        end
-    end
-    refreshDupeNow()
-    dupeNowBtn.MouseEnter:Connect(function()
-        local items = (_lastReceivedItems and #_lastReceivedItems > 0) and _lastReceivedItems
-        dupeNowBtn.BackgroundColor3 = items and Color3.fromRGB(100,210,85) or Color3.fromRGB(75,75,95)
-    end)
-    dupeNowBtn.MouseLeave:Connect(function() refreshDupeNow() end)
-    dupeNowBtn.Activated:Connect(function()
-        _doDupeReceived()
-        task.delay(0.1, refreshDupeNow)
-    end)
-    -- Refresh label whenever the tab is opened (trade may have happened since)
-    tabMisc.Activated:Connect(refreshDupeNow)
-    end -- dupeNow row scope
+    -- ── DEBUG: Auto-Fill Trade Key ────────────────────────
     -- Press to open Trade Setup pre-filled with the username and offered items
     -- captured from the most recent real trade session.  Visual-only.
     do
     local row7 = New("Frame", {
         Size=UDim2.new(1,0,0,42), BackgroundColor3=Color3.fromRGB(24,24,32),
-        BorderSizePixel=0, LayoutOrder=5, Parent=keysContent,
+        BorderSizePixel=0, LayoutOrder=4, Parent=keysContent,
     })
     Corner(row7, 6); Stroke(row7, Color3.fromRGB(50,50,70), 1, 0.3)
     New("TextLabel", {
@@ -6828,7 +6667,12 @@ do
     do
     local row8 = New("Frame", {
         Size=UDim2.new(1,0,0,42), BackgroundColor3=Color3.fromRGB(24,24,32),
-        BorderSizePixel=0, LayoutOrder=6, Parent=keysContent,
+        BorderSizePixel=0, LayoutOrder=5, Parent=keysContent,
+    })
+    Corner(row8, 6); Stroke(row8, Color3.fromRGB(50,50,70), 1, 0.3)
+    New("TextLabel", {
+        Size=UDim2.new(0.6,-10,1,0), Position=UDim2.new(0,10,0,0),
+        BackgroundTransparency=1, Text="Trade Notification",
         TextColor3=Color3.fromRGB(220,220,230), Font=Enum.Font.Gotham,
         TextSize=12, TextXAlignment=Enum.TextXAlignment.Left, Parent=row8,
     })
