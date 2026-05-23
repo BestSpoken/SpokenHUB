@@ -421,7 +421,7 @@ local function ApplyMutation(model, animalName, mutName)
                         return
                     end
                     local colorIdx = tonumber(
-                        v:GetAttribute(("%*Color"):format(mutName)) or
+                        v:GetAttribute(("%sColor"):format(mutName)) or
                         v:GetAttribute("Color") or 1) or 1
                     colorIdx = math.clamp(colorIdx, 1, #palette)
                     local col = palette[colorIdx] or palette[1]
@@ -5471,8 +5471,27 @@ DoSpawn = function()
             end)
             att = Instance.new("Attachment")
             att.Name = "OVERHEAD_ATTACHMENT"
-            att.CFrame = CFrame.new(0, baseExtY * 0.75 * overheadMod, 0)
-            att.Parent = spawnPart
+            -- Parent the attachment to a part INSIDE the model so it follows
+            -- PivotTo calls automatically.  spawnPart is external to the model
+            -- and does NOT move with it, so the overhead would drift immediately.
+            local anchorPart = model.PrimaryPart
+            if not anchorPart then
+                for _, d in ipairs(model:GetDescendants()) do
+                    if d:IsA("BasePart") then anchorPart = d; break end
+                end
+            end
+            if anchorPart then
+                -- Express the desired world offset in anchorPart's local space
+                local pivot = model:GetPivot()
+                local worldDesired = pivot * CFrame.new(0, baseExtY * 0.75 * overheadMod, 0)
+                att.CFrame = anchorPart.CFrame:Inverse() * worldDesired
+                att.Parent = anchorPart
+            else
+                -- Fallback (no BasePart yet): attach to spawnPart temporarily;
+                -- the revalidation pass below will relocate it once parts exist.
+                att.CFrame = CFrame.new(0, baseExtY * 0.75 * overheadMod, 0)
+                att.Parent = spawnPart
+            end
         end
 
         local focScript = RS.Controllers.FastOverheadController
