@@ -3826,8 +3826,8 @@ spawnBtn.MouseEnter:Connect(function() spawnBtn.BackgroundColor3=Color3.fromRGB(
 spawnBtn.MouseLeave:Connect(function() spawnBtn.BackgroundColor3=Color3.fromRGB(40,160,70) end)
 
 
-local statusLbl = New("TextLabel", {Size=UDim2.new(1,0,0,0), BackgroundTransparency=1, Text="", TextColor3=Color3.fromRGB(230,230,240), Font=Enum.Font.GothamBold, TextSize=10, TextXAlignment=Enum.TextXAlignment.Center, Parent=brainrotsPage, Visible=false})
-local countLbl = New("TextLabel", {Size=UDim2.new(1,0,0,0), BackgroundTransparency=1, Text="", TextColor3=Color3.fromRGB(230,230,240), Font=Enum.Font.GothamSemibold, TextSize=10, TextXAlignment=Enum.TextXAlignment.Center, Parent=brainrotsPage, Visible=false})
+local statusLbl = New("TextLabel", {Size=UDim2.new(1,0,0,14), BackgroundTransparency=1, Text="", TextColor3=Color3.fromRGB(230,230,240), Font=Enum.Font.GothamBold, TextSize=10, TextXAlignment=Enum.TextXAlignment.Center, LayoutOrder=10, Parent=brainrotsPage, Visible=true})
+local countLbl = New("TextLabel", {Size=UDim2.new(1,0,0,14), BackgroundTransparency=1, Text="", TextColor3=Color3.fromRGB(230,230,240), Font=Enum.Font.GothamSemibold, TextSize=10, TextXAlignment=Enum.TextXAlignment.Center, LayoutOrder=11, Parent=brainrotsPage, Visible=true})
 
 -- ── TRAITS DROPDOWN (inline) ─────────────────────────────
 local traitsVisible = false
@@ -3840,10 +3840,13 @@ local tmPopup = New("Frame", {
 Corner(tmPopup, 6)
 Stroke(tmPopup, Color3.fromRGB(50,45,80), 1, 0.2)
 
+-- forward declare so the click handler below can reference it before the definition
+local _updateTraitsBtnText
+
 traitsBtn.MouseButton1Click:Connect(function()
     traitsVisible = not traitsVisible
     tmPopup.Visible = traitsVisible
-    _updateTraitsBtnText()
+    if _updateTraitsBtnText then _updateTraitsBtnText() end
 end)
 
 local traitsGrid = New("ScrollingFrame", {
@@ -3861,7 +3864,7 @@ do
     up.PaddingTop=UDim.new(0,4); up.PaddingBottom=UDim.new(0,4)
 end
 
-local function _updateTraitsBtnText()
+_updateTraitsBtnText = function()
     local sel = {}
     for trait, on in pairs(selectedTraits) do
         if on then table.insert(sel, trait) end
