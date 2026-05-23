@@ -5343,22 +5343,22 @@ DoSpawn = function()
             table.sort(sortedPodiumNames)
         end
     end
-    -- Helper: returns true if a real (server-spawned) animal model exists near
-    -- a spawn part. Used as a workspace-level fallback when the Synchronizer
-    -- channel is unavailable or returns an empty table.
+    -- Helper: returns true if a REAL server-spawned animal model exists near
+    -- a spawn part. We only count models that have a Humanoid or AnimationController
+    -- (real brainrot animals always have one) AND are not our own KV fakes.
+    -- This avoids false-positives from podium parts, decorations, or NPCs.
     local function _hasRealAnimalNear(sp)
+        -- Only use this if the Synchronizer gave us nothing useful.
+        -- If serverPods was populated at all, trust it exclusively.
+        if next(serverPods) ~= nil then return false end
         for _, obj in ipairs(workspace:GetChildren()) do
-            if obj:IsA("Model") and not obj:GetAttribute("KVSpawned") then
+            if obj:IsA("Model")
+            and not obj:GetAttribute("KVSpawned")
+            and (obj:FindFirstChildWhichIsA("AnimationController", true)
+                 or obj:FindFirstChildWhichIsA("Humanoid", true))
+            then
                 local ok, pos = pcall(function() return obj:GetPivot().Position end)
-                if ok and (pos - sp.Position).Magnitude < 5 then
-                    return true
-                end
-            end
-        end
-        local base = sp.Parent  -- sp is Base.Spawn, so sp.Parent == Base
-        if base then
-            for _, obj in ipairs(base:GetChildren()) do
-                if obj:IsA("Model") and not obj:GetAttribute("KVSpawned") then
+                if ok and (pos - sp.Position).Magnitude < 4 then
                     return true
                 end
             end
@@ -5373,7 +5373,7 @@ DoSpawn = function()
             if sortedPodiumNames[i] == _slotOverride then
                 local podiumKey = sortedPodiumNames[i]
                 local serverAnimal = podiumKey and serverPods[podiumKey]
-                local occupied = serverAnimal ~= nil and serverAnimal ~= "Empty"
+                local occupied = serverAnimal and serverAnimal ~= "Empty" and serverAnimal ~= false
                 if not occupied then
                     if _hasRealAnimalNear(sp) then
                         occupied = true
@@ -5403,7 +5403,9 @@ DoSpawn = function()
             local podiumKey = sortedPodiumNames[i]
             if podiumKey then
                 local serverAnimal = serverPods[podiumKey]
-                if serverAnimal ~= nil and serverAnimal ~= "Empty" then
+                -- Only treat as occupied if the server explicitly says there IS an animal
+                -- (a non-nil, non-"Empty", non-false value). nil means the slot has no data = empty.
+                if serverAnimal and serverAnimal ~= "Empty" and serverAnimal ~= false then
                     occupied = true
                 end
             end
