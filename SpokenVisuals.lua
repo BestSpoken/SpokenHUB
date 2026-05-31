@@ -49,16 +49,16 @@ local function GetSafeParent()
 end
 
 -- ── THEME ────────────────────────────────────────────────
-local BG      = Color3.fromRGB(18,18,22)
-local SURFACE = Color3.fromRGB(24,24,30)
-local ACCENT  = Color3.fromRGB(108,92,231)
-local BORDER  = Color3.fromRGB(50,45,80)
-local TEXT    = Color3.fromRGB(230,230,240)
-local SUBTEXT = Color3.fromRGB(130,125,160)
-local ITEMHOV = Color3.fromRGB(30,28,42)
-local ITEMSEL = Color3.fromRGB(50,42,100)
-local BTNRED  = Color3.fromRGB(180,50,50)
-local BTNGRN  = Color3.fromRGB(50,170,90)
+local BG      = Color3.fromRGB(10,10,15)
+local SURFACE = Color3.fromRGB(16,16,26)
+local ACCENT  = Color3.fromRGB(120,80,255)
+local BORDER  = Color3.fromRGB(70,50,130)
+local TEXT    = Color3.fromRGB(240,238,255)
+local SUBTEXT = Color3.fromRGB(145,135,185)
+local ITEMHOV = Color3.fromRGB(28,22,52)
+local ITEMSEL = Color3.fromRGB(65,42,128)
+local BTNRED  = Color3.fromRGB(200,45,65)
+local BTNGRN  = Color3.fromRGB(40,190,100)
 
 local RARITY_COLORS = {
     Common              = Color3.fromRGB(0,171,40),
@@ -87,7 +87,7 @@ local MUTATION_PALETTES = {
     Candy       = {Color3.fromRGB(255,105,180), Color3.fromRGB(255,182,193),Color3.fromRGB(200,50,150),Color3.fromRGB(255,20,147), Color3.fromRGB(255,200,220),Color3.fromRGB(255,240,245)},
     Lava        = {Color3.fromRGB(200,50,0),    Color3.fromRGB(255,100,0),  Color3.fromRGB(150,20,0),  Color3.fromRGB(100,10,0),   Color3.fromRGB(255,160,0),  Color3.fromRGB(255,220,100)},
     Galaxy      = {Color3.fromRGB(60,0,120),    Color3.fromRGB(100,0,180),  Color3.fromRGB(30,0,80),   Color3.fromRGB(180,0,255),  Color3.fromRGB(80,0,160),   Color3.fromRGB(200,150,255)},
-    YinYang     = {BG, Color3.fromRGB(20,20,28),Color3.fromRGB(230,230,240),     Color3.fromRGB(230,230,240),   Color3.fromRGB(128,128,128),Color3.fromRGB(24,24,30)},
+    YinYang     = {BG, Color3.fromRGB(14,12,24),Color3.fromRGB(230,230,240),     Color3.fromRGB(230,230,240),   Color3.fromRGB(128,128,128),Color3.fromRGB(16,14,28)},
     Radioactive = {Color3.fromRGB(100,255,0),   Color3.fromRGB(150,255,50), Color3.fromRGB(50,200,0),  Color3.fromRGB(0,150,0),    Color3.fromRGB(200,255,100),Color3.fromRGB(230,255,180)},
     Cursed      = {Color3.fromRGB(255,23,23),   Color3.fromRGB(180,0,0),    Color3.fromRGB(120,0,0),   Color3.fromRGB(80,0,0),     Color3.fromRGB(255,100,100),Color3.fromRGB(255,180,180)},
     Divine      = {Color3.fromRGB(255,215,0),   Color3.fromRGB(255,255,200),Color3.fromRGB(200,160,0), Color3.fromRGB(255,240,150),BG,Color3.fromRGB(255,250,220)},
@@ -245,7 +245,7 @@ local function MakeDraggable(frame,handle)
 end
 local function SectionHeader(parent,text,yPos)
     New("Frame",{Size=UDim2.new(0,3,0,14),Position=UDim2.new(0,10,0,yPos+2),BackgroundColor3=ACCENT,BorderSizePixel=0,Parent=parent})
-    New("TextLabel",{Size=UDim2.new(1,-28,0,18),Position=UDim2.new(0,18,0,yPos),Text=text:upper(),TextColor3=Color3.fromRGB(230,230,240),Font=Enum.Font.GothamBold,TextSize=9,BackgroundTransparency=1,TextXAlignment=Enum.TextXAlignment.Left,Parent=parent})
+    New("TextLabel",{Size=UDim2.new(1,-28,0,18),Position=UDim2.new(0,18,0,yPos),Text=text:upper(),TextColor3=TEXT,Font=Enum.Font.GothamBold,TextSize=9,BackgroundTransparency=1,TextXAlignment=Enum.TextXAlignment.Left,Parent=parent})
 end
 
 -- ── PLOT HELPERS ─────────────────────────────────────────
@@ -3164,7 +3164,7 @@ pcall(function()
 end)
 
 -- ── MAIN WINDOW ──────────────────────────────────────────
-local WIN_W = 400
+local WIN_W = 420
 local win = New("Frame", {
     Size=UDim2.new(0,WIN_W,0,514),
     Position=UDim2.new(0,20,0,200),
@@ -3172,21 +3172,36 @@ local win = New("Frame", {
     BorderSizePixel=0, Active=true, Parent=sg,
     ClipsDescendants=false,
 })
-Corner(win, 8)
-Stroke(win, Color3.fromRGB(50,45,80), 1, 0.2)
+Corner(win, 12)
+Stroke(win, BORDER, 1.5, 0.0)
 -- title bar
 local tbar = New("Frame", {
-    Size=UDim2.new(1,0,0,36),
-    BackgroundColor3=Color3.fromRGB(30,28,42),
+    Size=UDim2.new(1,0,0,44),
+    BackgroundColor3=Color3.fromRGB(14,12,24),
     BorderSizePixel=0, Parent=win,
 })
-Corner(tbar, 8)
-New("Frame", {Size=UDim2.new(1,0,0.5,0), Position=UDim2.new(0,0,0.5,0), BackgroundColor3=Color3.fromRGB(30,28,42), BorderSizePixel=0, Parent=tbar})
+Corner(tbar, 12)
+-- bottom fill to square off bottom of titlebar
+New("Frame", {Size=UDim2.new(1,0,0.5,0), Position=UDim2.new(0,0,0.5,0), BackgroundColor3=Color3.fromRGB(14,12,24), BorderSizePixel=0, Parent=tbar})
+-- accent left bar
+New("Frame", {
+    Size=UDim2.new(0,3,0,22), Position=UDim2.new(0,12,0,11),
+    BackgroundColor3=ACCENT, BorderSizePixel=0, Parent=tbar,
+})
+-- title
 New("TextLabel", {
-    Size=UDim2.new(1,-20,1,0), Position=UDim2.new(0,10,0,0),
-    Text="Potion scripts best visuals oat",
-    TextColor3=Color3.fromRGB(230,230,240), Font=Enum.Font.GothamSemibold,
-    TextSize=10, BackgroundTransparency=1,
+    Size=UDim2.new(1,-80,1,0), Position=UDim2.new(0,22,0,0),
+    Text="✦  Potion Visuals",
+    TextColor3=TEXT, Font=Enum.Font.GothamBold,
+    TextSize=13, BackgroundTransparency=1,
+    TextXAlignment=Enum.TextXAlignment.Left, Parent=tbar,
+})
+-- subtitle
+New("TextLabel", {
+    Size=UDim2.new(1,-80,1,0), Position=UDim2.new(0,22,0,16),
+    Text="Spawner  •  Best Visuals",
+    TextColor3=SUBTEXT, Font=Enum.Font.Gotham,
+    TextSize=9, BackgroundTransparency=1,
     TextXAlignment=Enum.TextXAlignment.Left, Parent=tbar,
 })
 MakeDraggable(win, tbar)
@@ -3216,12 +3231,12 @@ end
 
 local contentVisible = true
 local mainContent = New("Frame", {
-    Size=UDim2.new(1,0,0,0), Position=UDim2.new(0,0,0,36),
+    Size=UDim2.new(1,0,0,0), Position=UDim2.new(0,0,0,44),
     BackgroundTransparency=1, BorderSizePixel=0, Parent=win,
     AutomaticSize=Enum.AutomaticSize.Y,
 })
 win.AutomaticSize = Enum.AutomaticSize.Y
-win.Size = UDim2.new(0,WIN_W,0,36)
+win.Size = UDim2.new(0,WIN_W,0,44)
 
 
 
@@ -3239,7 +3254,7 @@ do
     if ul2 then
         ul2:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
             if contentVisible then
-                win.Size = UDim2.new(0,WIN_W,0,36+ul2.AbsoluteContentSize.Y+20)
+                win.Size = UDim2.new(0,WIN_W,0,44+ul2.AbsoluteContentSize.Y+20)
             end
         end)
     end
@@ -3247,14 +3262,15 @@ end
 
 -- ── TAB BAR ──────────────────────────────────────────────
 local tabBar = New("Frame", {
-    Size=UDim2.new(1,0,0,34), BackgroundColor3=Color3.fromRGB(18,18,22),
+    Size=UDim2.new(1,0,0,38), BackgroundColor3=Color3.fromRGB(12,10,20),
     BorderSizePixel=0, LayoutOrder=0, Parent=mainContent,
 })
-Corner(tabBar, 6)
+Corner(tabBar, 10)
+Stroke(tabBar, BORDER, 1, 0.5)
 do
     local ul = Instance.new("UIListLayout", tabBar)
     ul.FillDirection = Enum.FillDirection.Horizontal
-    ul.HorizontalAlignment = Enum.HorizontalAlignment.Left
+    ul.HorizontalAlignment = Enum.HorizontalAlignment.Center
     ul.VerticalAlignment = Enum.VerticalAlignment.Center
     ul.Padding = UDim.new(0, 4)
     local pad = Instance.new("UIPadding", tabBar)
@@ -3264,13 +3280,25 @@ end
 
 local function MakeTab(label, order)
     local btn = New("TextButton", {
-        Size=UDim2.new(0.25, -5, 0, 26),
-        BackgroundColor3=Color3.fromRGB(30,28,42),
-        Text=label, TextColor3=Color3.fromRGB(180,180,200),
-        Font=Enum.Font.GothamBold, TextSize=11,
+        Size=UDim2.new(0.25, -5, 0, 28),
+        BackgroundColor3=Color3.fromRGB(22,18,38),
+        Text=label, TextColor3=SUBTEXT,
+        Font=Enum.Font.GothamBold, TextSize=10,
         AutoButtonColor=false, LayoutOrder=order, Parent=tabBar,
     })
-    Corner(btn, 5)
+    Corner(btn, 8)
+    btn.MouseEnter:Connect(function()
+        if btn.BackgroundColor3 ~= ACCENT then
+            btn.BackgroundColor3 = Color3.fromRGB(35,28,65)
+            btn.TextColor3 = TEXT
+        end
+    end)
+    btn.MouseLeave:Connect(function()
+        if btn.BackgroundColor3 ~= ACCENT then
+            btn.BackgroundColor3 = Color3.fromRGB(22,18,38)
+            btn.TextColor3 = SUBTEXT
+        end
+    end)
     return btn
 end
 
@@ -3349,14 +3377,14 @@ local function SetTab(tab)
     tradingPage.Visible   = tab == "Trading"
     basePage.Visible      = tab == "Base"
     miscPage.Visible      = tab == "Misc"
-    tabBrainrots.BackgroundColor3 = tab == "Brainrots" and ACCENT or Color3.fromRGB(30,28,42)
-    tabBrainrots.TextColor3       = tab == "Brainrots" and Color3.fromRGB(255,255,255) or Color3.fromRGB(180,180,200)
-    tabTrading.BackgroundColor3   = tab == "Trading"   and ACCENT or Color3.fromRGB(30,28,42)
-    tabTrading.TextColor3         = tab == "Trading"   and Color3.fromRGB(255,255,255) or Color3.fromRGB(180,180,200)
-    tabBase.BackgroundColor3      = tab == "Base"      and ACCENT or Color3.fromRGB(30,28,42)
-    tabBase.TextColor3            = tab == "Base"      and Color3.fromRGB(255,255,255) or Color3.fromRGB(180,180,200)
-    tabMisc.BackgroundColor3      = tab == "Misc"      and ACCENT or Color3.fromRGB(30,28,42)
-    tabMisc.TextColor3            = tab == "Misc"      and Color3.fromRGB(255,255,255) or Color3.fromRGB(180,180,200)
+    tabBrainrots.BackgroundColor3 = tab == "Brainrots" and ACCENT or Color3.fromRGB(22,18,38)
+    tabBrainrots.TextColor3       = tab == "Brainrots" and Color3.fromRGB(255,255,255) or SUBTEXT
+    tabTrading.BackgroundColor3   = tab == "Trading"   and ACCENT or Color3.fromRGB(22,18,38)
+    tabTrading.TextColor3         = tab == "Trading"   and Color3.fromRGB(255,255,255) or SUBTEXT
+    tabBase.BackgroundColor3      = tab == "Base"      and ACCENT or Color3.fromRGB(22,18,38)
+    tabBase.TextColor3            = tab == "Base"      and Color3.fromRGB(255,255,255) or SUBTEXT
+    tabMisc.BackgroundColor3      = tab == "Misc"      and ACCENT or Color3.fromRGB(22,18,38)
+    tabMisc.TextColor3            = tab == "Misc"      and Color3.fromRGB(255,255,255) or SUBTEXT
 end
 SetTab("Brainrots")
 tabBrainrots.Activated:Connect(function() SetTab("Brainrots") end)
@@ -3369,28 +3397,28 @@ tabMisc.Activated:Connect(function()      SetTab("Misc")      end)
 
 -- ── SELECTED ANIMAL HEADER ───────────────────────────────
 local selectedHeader = New("Frame", {
-    Size=UDim2.new(1,0,0,50), BackgroundColor3=Color3.fromRGB(28,28,38),
+    Size=UDim2.new(1,0,0,56), BackgroundColor3=Color3.fromRGB(16,12,30),
     BorderSizePixel=0, LayoutOrder=1, Parent=brainrotsPage,
 })
-Corner(selectedHeader, 6)
-Stroke(selectedHeader, Color3.fromRGB(60,60,80), 1, 0.2)
+Corner(selectedHeader, 10)
+Stroke(selectedHeader, BORDER, 1, 0.3)
 local rarityTag = New("TextLabel", {
-    Size=UDim2.new(1,0,0,14), Position=UDim2.new(0,10,0,7),
-    BackgroundTransparency=1, Text="BRAINROTS",
-    TextColor3=Color3.fromRGB(230,230,240), Font=Enum.Font.GothamBold,
+    Size=UDim2.new(1,0,0,15), Position=UDim2.new(0,12,0,8),
+    BackgroundTransparency=1, Text="SELECTED BRAINROT",
+    TextColor3=ACCENT, Font=Enum.Font.GothamBold,
     TextSize=9, TextXAlignment=Enum.TextXAlignment.Left, Parent=selectedHeader,
 })
 local selectedName = New("TextLabel", {
-    Size=UDim2.new(0.65,0,0,22), Position=UDim2.new(0,10,0,22),
+    Size=UDim2.new(0.65,0,0,24), Position=UDim2.new(0,12,0,26),
     BackgroundTransparency=1, Text="Select an animal...",
-    TextColor3=Color3.fromRGB(230,230,240), Font=Enum.Font.GothamBold,
-    TextSize=14, TextXAlignment=Enum.TextXAlignment.Left, Parent=selectedHeader,
+    TextColor3=TEXT, Font=Enum.Font.GothamBold,
+    TextSize=15, TextXAlignment=Enum.TextXAlignment.Left, Parent=selectedHeader,
 })
 local selectedPrice = New("TextLabel", {
-    Size=UDim2.new(0.4,-10,0,22), Position=UDim2.new(0.6,0,0,22),
+    Size=UDim2.new(0.38,-8,0,24), Position=UDim2.new(0.62,0,0,26),
     BackgroundTransparency=1, Text="",
-    TextColor3=Color3.fromRGB(30,160,30), Font=Enum.Font.GothamBold,
-    TextSize=14, TextXAlignment=Enum.TextXAlignment.Right, Parent=selectedHeader,
+    TextColor3=Color3.fromRGB(80,220,140), Font=Enum.Font.GothamBold,
+    TextSize=15, TextXAlignment=Enum.TextXAlignment.Right, Parent=selectedHeader,
 })
 
 local function _fmtCash(n)
@@ -3425,32 +3453,32 @@ local _triggerTradeNotif  -- defined ~line 8400; called from the Trading-tab but
 -- ── ANIMAL TOGGLE BUTTON ─────────────────────────────────
 local listVisible = false
 local animalToggleBtn = New("TextButton", {
-    Size=UDim2.new(1,0,0,32), BackgroundColor3=Color3.fromRGB(24,24,30),
-    BorderSizePixel=0, Text="▼  Select Animal",
-    TextColor3=Color3.fromRGB(230,230,240), Font=Enum.Font.GothamBold,
+    Size=UDim2.new(1,0,0,34), BackgroundColor3=Color3.fromRGB(16,14,28),
+    BorderSizePixel=0, Text="▼   Select Animal",
+    TextColor3=TEXT, Font=Enum.Font.GothamBold,
     TextSize=12, AutoButtonColor=false, LayoutOrder=2, Parent=brainrotsPage,
 })
-Corner(animalToggleBtn, 6)
-Stroke(animalToggleBtn, Color3.fromRGB(60,60,90), 1, 0.2)
-animalToggleBtn.MouseEnter:Connect(function() animalToggleBtn.BackgroundColor3=Color3.fromRGB(30,28,42) end)
-animalToggleBtn.MouseLeave:Connect(function() animalToggleBtn.BackgroundColor3=Color3.fromRGB(24,24,30) end)
+Corner(animalToggleBtn, 10)
+Stroke(animalToggleBtn, BORDER, 1, 0.3)
+animalToggleBtn.MouseEnter:Connect(function() animalToggleBtn.BackgroundColor3=Color3.fromRGB(26,20,46) end)
+animalToggleBtn.MouseLeave:Connect(function() animalToggleBtn.BackgroundColor3=Color3.fromRGB(16,14,28) end)
 
 -- ── LIST CONTAINER (inline under toggle button) ──────────
 local listContainer = New("Frame", {
     Size=UDim2.new(1,0,0,276),
-    BackgroundColor3=Color3.fromRGB(30,28,42),
+    BackgroundColor3=Color3.fromRGB(14,12,24),
     BorderSizePixel=0, ClipsDescendants=true,
     Visible=false, LayoutOrder=3, Parent=brainrotsPage,
 })
-Corner(listContainer, 6)
-Stroke(listContainer, Color3.fromRGB(50,45,80), 1, 0.2)
+Corner(listContainer, 10)
+Stroke(listContainer, BORDER, 1, 0.3)
 
 -- Multi-Select toggle row at the top of the dropdown
 local multiToggle = New("TextButton", {
     Size=UDim2.new(1,-8,0,24), Position=UDim2.new(0,4,0,4),
-    BackgroundColor3=Color3.fromRGB(60,60,80),
+    BackgroundColor3=BORDER,
     Text="Select Multiple: OFF",
-    TextColor3=Color3.fromRGB(230,230,240), Font=Enum.Font.GothamBold,
+    TextColor3=Color3.fromRGB(240,238,255), Font=Enum.Font.GothamBold,
     TextSize=10, AutoButtonColor=false, BorderSizePixel=0, Parent=listContainer,
 })
 Corner(multiToggle, 5)
@@ -3461,22 +3489,22 @@ local function _refreshMultiToggle()
         multiToggle.Text = count > 0
             and ("Select Multiple: ON  (" .. count .. " selected)")
             or "Select Multiple: ON"
-        multiToggle.BackgroundColor3 = Color3.fromRGB(108,92,231)
+        multiToggle.BackgroundColor3 = ACCENT
     else
         multiToggle.Text = "Select Multiple: OFF"
-        multiToggle.BackgroundColor3 = Color3.fromRGB(60,60,80)
+        multiToggle.BackgroundColor3 = BORDER
     end
 end
 
 -- Search row: holds a magnifier icon + the actual TextBox so the placeholder
 -- can be animated with a "Search... → Search.. → Search." typing cycle.
 local searchRow = New("Frame", {
-    Size=UDim2.new(1,-8,0,30), Position=UDim2.new(0,4,0,32),
-    BackgroundColor3=Color3.fromRGB(24,24,30), BorderSizePixel=0,
+    Size=UDim2.new(1,-8,0,32), Position=UDim2.new(0,4,0,32),
+    BackgroundColor3=Color3.fromRGB(18,14,32), BorderSizePixel=0,
     Parent=listContainer,
 })
-Corner(searchRow, 6)
-Stroke(searchRow, Color3.fromRGB(50,45,80), 1, 0.2)
+Corner(searchRow, 8)
+Stroke(searchRow, BORDER, 1, 0.4)
 
 -- magnifier glyph (unicode) on the left
 New("TextLabel", {
@@ -3492,7 +3520,7 @@ local searchBox = New("TextBox", {
     BackgroundTransparency=1, BorderSizePixel=0,
     Text="", PlaceholderText="Search...",
     PlaceholderColor3=Color3.fromRGB(150,140,200),
-    TextColor3=Color3.fromRGB(230,230,240), Font=Enum.Font.GothamBold,
+    TextColor3=Color3.fromRGB(240,238,255), Font=Enum.Font.GothamBold,
     TextSize=12, ClearTextOnFocus=false, Parent=searchRow,
 })
 
@@ -3515,24 +3543,24 @@ end
 -- Subtle stroke pulse on focus
 searchBox.Focused:Connect(function()
     for _, c in ipairs(searchRow:GetChildren()) do
-        if c:IsA("UIStroke") then c.Color = Color3.fromRGB(108,92,231); c.Transparency = 0 end
+        if c:IsA("UIStroke") then c.Color = ACCENT; c.Transparency = 0 end
     end
 end)
 searchBox.FocusLost:Connect(function()
     for _, c in ipairs(searchRow:GetChildren()) do
-        if c:IsA("UIStroke") then c.Color = Color3.fromRGB(50,45,80); c.Transparency = 0.2 end
+        if c:IsA("UIStroke") then c.Color = BORDER; c.Transparency = 0.2 end
     end
 end)
 
 local listFrame = New("ScrollingFrame", {
     Size=UDim2.new(1,0,0,206), Position=UDim2.new(0,0,0,66),
     BackgroundColor3=BG, BorderSizePixel=0,
-    ScrollBarThickness=3, ScrollBarImageColor3=Color3.fromRGB(108,92,231),
+    ScrollBarThickness=3, ScrollBarImageColor3=ACCENT,
     CanvasSize=UDim2.new(0,0,0,0), AutomaticCanvasSize=Enum.AutomaticSize.Y,
     Parent=listContainer,
 })
 Corner(listFrame, 6)
-Stroke(listFrame, Color3.fromRGB(50,50,70), 1, 0.3)
+Stroke(listFrame, BORDER, 1, 0.3)
 do
     local ul=Instance.new("UIListLayout",listFrame); ul.Padding=UDim.new(0,0)
     local up=Instance.new("UIPadding",listFrame)
@@ -3560,7 +3588,7 @@ local function BuildAnimalList(filter)
                 local info = ANIMAL_DATA[name]
                 local b = New("TextButton", {
                     Size=UDim2.new(1,0,0,30),
-                    BackgroundColor3=sel and Color3.fromRGB(108,92,231) or BG,
+                    BackgroundColor3=sel and ACCENT or BG,
                     BackgroundTransparency=0,
                     BorderSizePixel=0, AutoButtonColor=false, Text="", Parent=listFrame,
                 })
@@ -3596,7 +3624,7 @@ local function BuildAnimalList(filter)
                 New("TextLabel", {
                     Size=UDim2.new(0.6,-36,1,0), Position=UDim2.new(0,36,0,0),
                     BackgroundTransparency=1, Text=name,
-                    TextColor3=Color3.fromRGB(230,230,240),
+                    TextColor3=Color3.fromRGB(240,238,255),
                     Font=Enum.Font.GothamBold, TextSize=11,
                     TextXAlignment=Enum.TextXAlignment.Left,
                     TextTruncate=Enum.TextTruncate.AtEnd, Parent=b,
@@ -3621,17 +3649,17 @@ local function BuildAnimalList(filter)
                 -- color row according to current state
                 local function _refreshRow()
                     if _multiSelectMode then
-                        b.BackgroundColor3 = _multiSelected[name] and Color3.fromRGB(108,92,231) or BG
+                        b.BackgroundColor3 = _multiSelected[name] and ACCENT or BG
                     else
-                        b.BackgroundColor3 = (selectedAnimal == name) and Color3.fromRGB(108,92,231) or BG
+                        b.BackgroundColor3 = (selectedAnimal == name) and ACCENT or BG
                     end
                 end
                 _refreshRow()
                 b.MouseEnter:Connect(function()
                     if _multiSelectMode then
-                        if not _multiSelected[name] then b.BackgroundColor3 = Color3.fromRGB(30,28,42) end
+                        if not _multiSelected[name] then b.BackgroundColor3 = Color3.fromRGB(22,18,40) end
                     else
-                        if selectedAnimal ~= name then b.BackgroundColor3 = Color3.fromRGB(30,28,42) end
+                        if selectedAnimal ~= name then b.BackgroundColor3 = Color3.fromRGB(22,18,40) end
                     end
                 end)
                 b.MouseLeave:Connect(function() _refreshRow() end)
@@ -3680,50 +3708,50 @@ _refreshMultiToggle()
 
 -- ── TRAITS & MUTATIONS BUTTON ─────────────────────────────
 local traitsBtn = New("TextButton", {
-    Size=UDim2.new(1,0,0,32), BackgroundColor3=Color3.fromRGB(24,24,30),
-    BorderSizePixel=0, Text="▼  Traits",
-    TextColor3=Color3.fromRGB(230,230,240), Font=Enum.Font.GothamBold,
+    Size=UDim2.new(1,0,0,34), BackgroundColor3=Color3.fromRGB(16,14,28),
+    BorderSizePixel=0, Text="▼   Traits",
+    TextColor3=TEXT, Font=Enum.Font.GothamBold,
     TextSize=12, AutoButtonColor=false, LayoutOrder=4, Parent=brainrotsPage,
 })
-Corner(traitsBtn, 6)
-Stroke(traitsBtn, Color3.fromRGB(60,60,90), 1, 0.2)
-traitsBtn.MouseEnter:Connect(function() traitsBtn.BackgroundColor3=Color3.fromRGB(30,28,42) end)
-traitsBtn.MouseLeave:Connect(function() traitsBtn.BackgroundColor3=Color3.fromRGB(24,24,30) end)
+Corner(traitsBtn, 10)
+Stroke(traitsBtn, BORDER, 1, 0.3)
+traitsBtn.MouseEnter:Connect(function() traitsBtn.BackgroundColor3=Color3.fromRGB(26,20,46) end)
+traitsBtn.MouseLeave:Connect(function() traitsBtn.BackgroundColor3=Color3.fromRGB(16,14,28) end)
 local tmBtn = traitsBtn -- legacy alias for downstream code that still references tmBtn
 
 -- ── QUANTITY ROW ─────────────────────────────────────────
 local spawnCount = 1
 local qtyRow = New("Frame", {
-    Size=UDim2.new(1,0,0,34), BackgroundColor3=Color3.fromRGB(30,28,42),
+    Size=UDim2.new(1,0,0,36), BackgroundColor3=Color3.fromRGB(14,12,24),
     BorderSizePixel=0, LayoutOrder=8, Parent=brainrotsPage,
 })
-Corner(qtyRow, 6)
-Stroke(qtyRow, Color3.fromRGB(50,50,70), 1, 0.3)
+Corner(qtyRow, 10)
+Stroke(qtyRow, BORDER, 1, 0.4)
 
 local minusBtn = New("TextButton", {
     Size=UDim2.new(0,40,1,0), Position=UDim2.new(0,0,0,0),
-    BackgroundColor3=Color3.fromRGB(28,28,38),
-    BorderSizePixel=0, Text="-", TextColor3=Color3.fromRGB(230,230,240),
+    BackgroundColor3=Color3.fromRGB(26,20,48),
+    BorderSizePixel=0, Text="-", TextColor3=TEXT,
     Font=Enum.Font.GothamBold, TextSize=18,
     AutoButtonColor=false, Parent=qtyRow,
 })
-Corner(minusBtn, 6)
+Corner(minusBtn, 8)
 
 local qtyLbl = New("TextLabel", {
     Size=UDim2.new(1,-80,1,0), Position=UDim2.new(0,40,0,0),
     BackgroundTransparency=1, Text="x1",
-    TextColor3=Color3.fromRGB(230,230,240), Font=Enum.Font.GothamBold,
+    TextColor3=TEXT, Font=Enum.Font.GothamBold,
     TextSize=13, Parent=qtyRow,
 })
 
 local plusBtn = New("TextButton", {
     Size=UDim2.new(0,40,1,0), Position=UDim2.new(1,-40,0,0),
-    BackgroundColor3=Color3.fromRGB(28,28,38),
-    BorderSizePixel=0, Text="+", TextColor3=Color3.fromRGB(230,230,240),
+    BackgroundColor3=Color3.fromRGB(26,20,48),
+    BorderSizePixel=0, Text="+", TextColor3=TEXT,
     Font=Enum.Font.GothamBold, TextSize=18,
     AutoButtonColor=false, Parent=qtyRow,
 })
-Corner(plusBtn, 6)
+Corner(plusBtn, 8)
 
 minusBtn.MouseButton1Click:Connect(function()
     spawnCount = math.max(1, spawnCount - 1); qtyLbl.Text = "x"..spawnCount
@@ -3731,37 +3759,37 @@ end)
 plusBtn.MouseButton1Click:Connect(function()
     spawnCount = math.min(10, spawnCount + 1); qtyLbl.Text = "x"..spawnCount
 end)
-minusBtn.MouseEnter:Connect(function() minusBtn.BackgroundColor3=Color3.fromRGB(50,42,100) end)
-minusBtn.MouseLeave:Connect(function() minusBtn.BackgroundColor3=Color3.fromRGB(28,28,38) end)
-plusBtn.MouseEnter:Connect(function() plusBtn.BackgroundColor3=Color3.fromRGB(50,42,100) end)
-plusBtn.MouseLeave:Connect(function() plusBtn.BackgroundColor3=Color3.fromRGB(28,28,38) end)
+minusBtn.MouseEnter:Connect(function() minusBtn.BackgroundColor3=ITEMSEL end)
+minusBtn.MouseLeave:Connect(function() minusBtn.BackgroundColor3=Color3.fromRGB(26,20,48) end)
+plusBtn.MouseEnter:Connect(function() plusBtn.BackgroundColor3=ITEMSEL end)
+plusBtn.MouseLeave:Connect(function() plusBtn.BackgroundColor3=Color3.fromRGB(26,20,48) end)
 
 -- ── SPAWN BUTTON ─────────────────────────────────────────
 local spawnBtn = New("TextButton", {
-    Size=UDim2.new(1,0,0,40), BackgroundColor3=Color3.fromRGB(40,160,70),
-    BorderSizePixel=0, Text="Spawn onto Podium",
+    Size=UDim2.new(1,0,0,40), BackgroundColor3=BTNGRN,
+    BorderSizePixel=0, Text="⚡  Spawn onto Podium",
     TextColor3=Color3.new(1,1,1), Font=Enum.Font.GothamBold,
     TextSize=14, AutoButtonColor=false, LayoutOrder=9, Parent=brainrotsPage,
 })
-Corner(spawnBtn, 6)
+Corner(spawnBtn, 10)
 
-spawnBtn.MouseEnter:Connect(function() spawnBtn.BackgroundColor3=Color3.fromRGB(50,180,80) end)
-spawnBtn.MouseLeave:Connect(function() spawnBtn.BackgroundColor3=Color3.fromRGB(40,160,70) end)
+spawnBtn.MouseEnter:Connect(function() spawnBtn.BackgroundColor3=Color3.fromRGB(55,210,115) end)
+spawnBtn.MouseLeave:Connect(function() spawnBtn.BackgroundColor3=BTNGRN end)
 
 
-local statusLbl = New("TextLabel", {Size=UDim2.new(1,0,0,0), BackgroundTransparency=1, Text="", TextColor3=Color3.fromRGB(230,230,240), Font=Enum.Font.GothamBold, TextSize=10, TextXAlignment=Enum.TextXAlignment.Center, Parent=brainrotsPage, Visible=false})
-local countLbl = New("TextLabel", {Size=UDim2.new(1,0,0,0), BackgroundTransparency=1, Text="", TextColor3=Color3.fromRGB(230,230,240), Font=Enum.Font.GothamSemibold, TextSize=10, TextXAlignment=Enum.TextXAlignment.Center, Parent=brainrotsPage, Visible=false})
+local statusLbl = New("TextLabel", {Size=UDim2.new(1,0,0,0), BackgroundTransparency=1, Text="", TextColor3=TEXT, Font=Enum.Font.GothamBold, TextSize=10, TextXAlignment=Enum.TextXAlignment.Center, Parent=brainrotsPage, Visible=false})
+local countLbl = New("TextLabel", {Size=UDim2.new(1,0,0,0), BackgroundTransparency=1, Text="", TextColor3=SUBTEXT, Font=Enum.Font.GothamSemibold, TextSize=10, TextXAlignment=Enum.TextXAlignment.Center, Parent=brainrotsPage, Visible=false})
 
 -- ── TRAITS DROPDOWN (inline) ─────────────────────────────
 local traitsVisible = false
 local tmPopup = New("Frame", {
     Size=UDim2.new(1,0,0,176),
-    BackgroundColor3=Color3.fromRGB(20,20,28),
+    BackgroundColor3=Color3.fromRGB(14,12,24),
     BorderSizePixel=0, ClipsDescendants=true,
     Visible=false, LayoutOrder=5, Parent=brainrotsPage,
 })
-Corner(tmPopup, 6)
-Stroke(tmPopup, Color3.fromRGB(50,45,80), 1, 0.2)
+Corner(tmPopup, 10)
+Stroke(tmPopup, BORDER, 1, 0.3)
 
 traitsBtn.MouseButton1Click:Connect(function()
     traitsVisible = not traitsVisible
@@ -3772,7 +3800,7 @@ end)
 local traitsGrid = New("ScrollingFrame", {
     Size=UDim2.new(1,0,1,-8), Position=UDim2.new(0,0,0,4),
     BackgroundColor3=BG, BorderSizePixel=0,
-    ScrollBarThickness=3, ScrollBarImageColor3=Color3.fromRGB(108,92,231),
+    ScrollBarThickness=3, ScrollBarImageColor3=ACCENT,
     CanvasSize=UDim2.new(0,0,0,0), AutomaticCanvasSize=Enum.AutomaticSize.Y,
     Parent=tmPopup,
 })
@@ -3804,7 +3832,7 @@ for _,trait in ipairs(TRAITS) do
     local sel = selectedTraits[trait] == true
     local b = New("TextButton", {
         Size=UDim2.new(1,0,0,30),
-        BackgroundColor3=sel and Color3.fromRGB(108,92,231) or BG,
+        BackgroundColor3=sel and ACCENT or BG,
         BorderSizePixel=0, AutoButtonColor=false, Text="",
         Parent=traitsGrid,
     })
@@ -3818,20 +3846,20 @@ for _,trait in ipairs(TRAITS) do
     else
         New("Frame", {
             Size=UDim2.new(0,24,0,24), Position=UDim2.new(0,8,0.5,-12),
-            BackgroundColor3=Color3.fromRGB(50,45,80), BorderSizePixel=0, Parent=b,
+            BackgroundColor3=BORDER, BorderSizePixel=0, Parent=b,
         })
     end
     New("TextLabel", {
         Size=UDim2.new(1,-44,1,0), Position=UDim2.new(0,36,0,0),
         BackgroundTransparency=1, Text=trait,
-        TextColor3=Color3.fromRGB(230,230,240),
+        TextColor3=Color3.fromRGB(240,238,255),
         Font=Enum.Font.GothamBold, TextSize=11,
         TextXAlignment=Enum.TextXAlignment.Left,
         TextTruncate=Enum.TextTruncate.AtEnd, Parent=b,
     })
     traitBtns[trait] = b
     b.MouseEnter:Connect(function()
-        if not selectedTraits[trait] then b.BackgroundColor3 = Color3.fromRGB(30,28,42) end
+        if not selectedTraits[trait] then b.BackgroundColor3 = Color3.fromRGB(22,18,40) end
     end)
     b.MouseLeave:Connect(function()
         if not selectedTraits[trait] then b.BackgroundColor3 = BG end
@@ -3839,7 +3867,7 @@ for _,trait in ipairs(TRAITS) do
     b.MouseButton1Click:Connect(function()
         selectedTraits[trait] = not selectedTraits[trait]
         local s = selectedTraits[trait]
-        b.BackgroundColor3 = s and Color3.fromRGB(108,92,231) or BG
+        b.BackgroundColor3 = s and ACCENT or BG
         _updateTraitsBtnText()
         _updateSelectedPrice()
     end)
@@ -3848,25 +3876,25 @@ end
 
 -- ── MUTATION DROPDOWN (inline, separate) ─────────────────
 local mutationsBtn = New("TextButton", {
-    Size=UDim2.new(1,0,0,32), BackgroundColor3=Color3.fromRGB(24,24,30),
+    Size=UDim2.new(1,0,0,32), BackgroundColor3=Color3.fromRGB(16,14,28),
     BorderSizePixel=0, Text="▼  Mutation",
-    TextColor3=Color3.fromRGB(230,230,240), Font=Enum.Font.GothamBold,
+    TextColor3=Color3.fromRGB(240,238,255), Font=Enum.Font.GothamBold,
     TextSize=12, AutoButtonColor=false, LayoutOrder=6, Parent=brainrotsPage,
 })
 Corner(mutationsBtn, 6)
-Stroke(mutationsBtn, Color3.fromRGB(60,60,90), 1, 0.2)
-mutationsBtn.MouseEnter:Connect(function() mutationsBtn.BackgroundColor3=Color3.fromRGB(30,28,42) end)
-mutationsBtn.MouseLeave:Connect(function() mutationsBtn.BackgroundColor3=Color3.fromRGB(24,24,30) end)
+Stroke(mutationsBtn, BORDER, 1, 0.2)
+mutationsBtn.MouseEnter:Connect(function() mutationsBtn.BackgroundColor3=Color3.fromRGB(22,18,40) end)
+mutationsBtn.MouseLeave:Connect(function() mutationsBtn.BackgroundColor3=Color3.fromRGB(16,14,28) end)
 
 local mutationsVisible = false
 local mutPopup = New("Frame", {
     Size=UDim2.new(1,0,0,176),
-    BackgroundColor3=Color3.fromRGB(20,20,28),
+    BackgroundColor3=Color3.fromRGB(14,12,24),
     BorderSizePixel=0, ClipsDescendants=true,
     Visible=false, LayoutOrder=7, Parent=brainrotsPage,
 })
 Corner(mutPopup, 6)
-Stroke(mutPopup, Color3.fromRGB(50,45,80), 1, 0.2)
+Stroke(mutPopup, BORDER, 1, 0.2)
 
 local function _updateMutationsBtnText()
     local arrow = mutationsVisible and "▲" or "▼"
@@ -3886,11 +3914,11 @@ end)
 local mutGrid = New("ScrollingFrame", {
     Size=UDim2.new(1,0,1,-8), Position=UDim2.new(0,0,0,4),
     BackgroundColor3=BG, BorderSizePixel=0,
-    ScrollBarThickness=3, ScrollBarImageColor3=Color3.fromRGB(108,92,231),
+    ScrollBarThickness=3, ScrollBarImageColor3=ACCENT,
     CanvasSize=UDim2.new(0,0,0,0), AutomaticCanvasSize=Enum.AutomaticSize.Y,
     Parent=mutPopup,
 })
-Corner(mutGrid, 6)
+Corner(mutGrid, 8)
 do
     local ul=Instance.new("UIListLayout",mutGrid); ul.Padding=UDim.new(0,0)
     local up=Instance.new("UIPadding",mutGrid)
@@ -3903,7 +3931,7 @@ for _,mut in ipairs(MUTATIONS) do
     local sel = (mut==selectedMutation)
     local b = New("TextButton", {
         Size=UDim2.new(1,0,0,30),
-        BackgroundColor3=sel and Color3.fromRGB(108,92,231) or BG,
+        BackgroundColor3=sel and ACCENT or BG,
         BorderSizePixel=0, AutoButtonColor=false, Text="",
         Parent=mutGrid,
     })
@@ -3923,14 +3951,14 @@ for _,mut in ipairs(MUTATIONS) do
     New("TextLabel", {
         Size=UDim2.new(1,-44,1,0), Position=UDim2.new(0,36,0,0),
         BackgroundTransparency=1, Text=(mut=="None") and "Normal" or mut,
-        TextColor3=Color3.fromRGB(230,230,240),
+        TextColor3=Color3.fromRGB(240,238,255),
         Font=Enum.Font.GothamBold, TextSize=11,
         TextXAlignment=Enum.TextXAlignment.Left,
         TextTruncate=Enum.TextTruncate.AtEnd, Parent=b,
     })
     mutBtns[mut] = b
     b.MouseEnter:Connect(function()
-        if selectedMutation ~= mut then b.BackgroundColor3 = Color3.fromRGB(30,28,42) end
+        if selectedMutation ~= mut then b.BackgroundColor3 = Color3.fromRGB(22,18,40) end
     end)
     b.MouseLeave:Connect(function()
         if selectedMutation ~= mut then b.BackgroundColor3 = BG end
@@ -3938,7 +3966,7 @@ for _,mut in ipairs(MUTATIONS) do
     b.MouseButton1Click:Connect(function()
         selectedMutation = mut
         for m,btn in pairs(mutBtns) do
-            btn.BackgroundColor3 = (m==mut) and Color3.fromRGB(108,92,231) or BG
+            btn.BackgroundColor3 = (m==mut) and ACCENT or BG
         end
         _updateMutationsBtnText()
         _updateSelectedPrice()
@@ -3950,7 +3978,7 @@ local function SetStatus(msg,col,dur)
         statusLbl.Text=msg; statusLbl.TextColor3=col or Color3.fromRGB(230,230,240)
     end)
     if dur then task.delay(dur,function() pcall(function()
-        statusLbl.Text="Ready"; statusLbl.TextColor3=Color3.fromRGB(230,230,240)
+        statusLbl.Text="Ready"; statusLbl.TextColor3=Color3.fromRGB(240,238,255)
     end) end) end
 end
 local function UpdateCount()
@@ -4112,7 +4140,7 @@ do
         if _skinFolder then callback(_skinFolder); return end
         if _skinLoading then SetStatus("Still loading skins...", Color3.fromRGB(255,150,50), 2); return end
         _skinLoading = true
-        SetStatus("Loading skin models...", Color3.fromRGB(108,92,231), 0)
+        SetStatus("Loading skin models...", ACCENT, 0)
         task.spawn(function()
             local haveFile = false
             pcall(function() haveFile = isfile(SKIN_FILE) end)
@@ -4131,7 +4159,7 @@ do
             end
 
             if not haveFile then
-                SetStatus("Downloading base skins...", Color3.fromRGB(108,92,231), 0)
+                SetStatus("Downloading base skins...", ACCENT, 0)
                 local ok, data = pcall(function()
                     return game:HttpGet(SKIN_URL)
                 end)
@@ -4653,25 +4681,25 @@ do
     -- toggle button (matches animal toggle style)
     local skinListVisible = false
     local skinToggleBtn = New("TextButton", {
-        Size=UDim2.new(1,0,0,32), BackgroundColor3=Color3.fromRGB(24,24,30),
+        Size=UDim2.new(1,0,0,32), BackgroundColor3=Color3.fromRGB(16,14,28),
         BorderSizePixel=0, Text="▼  Select Base Skin",
-        TextColor3=Color3.fromRGB(230,230,240), Font=Enum.Font.GothamBold,
+        TextColor3=Color3.fromRGB(240,238,255), Font=Enum.Font.GothamBold,
         TextSize=12, AutoButtonColor=false, LayoutOrder=2, Parent=basePage,
     })
     Corner(skinToggleBtn, 6)
-    Stroke(skinToggleBtn, Color3.fromRGB(60,60,90), 1, 0.2)
-    skinToggleBtn.MouseEnter:Connect(function() skinToggleBtn.BackgroundColor3=Color3.fromRGB(30,28,42) end)
-    skinToggleBtn.MouseLeave:Connect(function() skinToggleBtn.BackgroundColor3=Color3.fromRGB(24,24,30) end)
+    Stroke(skinToggleBtn, BORDER, 1, 0.2)
+    skinToggleBtn.MouseEnter:Connect(function() skinToggleBtn.BackgroundColor3=Color3.fromRGB(22,18,40) end)
+    skinToggleBtn.MouseLeave:Connect(function() skinToggleBtn.BackgroundColor3=Color3.fromRGB(16,14,28) end)
 
     -- inline dropdown panel (matches animal/traits/mutation pattern)
     local skinListPanel = New("Frame", {
         Size=UDim2.new(1, 0, 0, 240),
-        BackgroundColor3=Color3.fromRGB(30,28,42),
+        BackgroundColor3=Color3.fromRGB(22,18,40),
         BorderSizePixel=0, ClipsDescendants=true,
         Visible=false, LayoutOrder=3, Parent=basePage,
     })
     Corner(skinListPanel, 6)
-    Stroke(skinListPanel, Color3.fromRGB(50,45,80), 1, 0.2)
+    Stroke(skinListPanel, BORDER, 1, 0.2)
 
     local skinApplyBtn = New("TextButton", {
         Size=UDim2.new(1,0,0,32), BackgroundColor3=BTNGRN,
@@ -4696,12 +4724,12 @@ do
     local skinListFrame = New("ScrollingFrame", {
         Size=UDim2.new(1,0,1,0), Position=UDim2.new(0,0,0,0),
         BackgroundColor3=BG, BorderSizePixel=0,
-        ScrollBarThickness=3, ScrollBarImageColor3=Color3.fromRGB(108,92,231),
+        ScrollBarThickness=3, ScrollBarImageColor3=ACCENT,
         CanvasSize=UDim2.new(0,0,0,0), AutomaticCanvasSize=Enum.AutomaticSize.Y,
         Parent=skinListPanel,
     })
     Corner(skinListFrame, 6)
-    Stroke(skinListFrame, Color3.fromRGB(50,50,70), 1, 0.3)
+    Stroke(skinListFrame, BORDER, 1, 0.3)
     do
         local ul=Instance.new("UIListLayout",skinListFrame); ul.Padding=UDim.new(0,0)
         local up=Instance.new("UIPadding",skinListFrame)
@@ -4728,7 +4756,7 @@ do
             local sel = (_selectedSkin == skin.name)
             local b = New("TextButton", {
                 Size=UDim2.new(1,0,0,30),
-                BackgroundColor3=sel and Color3.fromRGB(108,92,231) or BG,
+                BackgroundColor3=sel and ACCENT or BG,
                 BackgroundTransparency=0,
                 BorderSizePixel=0, AutoButtonColor=false, Text="", Parent=skinListFrame,
             })
@@ -4736,12 +4764,12 @@ do
             New("TextLabel", {
                 Size=UDim2.new(1,-16,1,0), Position=UDim2.new(0,12,0,0),
                 BackgroundTransparency=1, Text=skin.name,
-                TextColor3=Color3.fromRGB(230,230,240),
+                TextColor3=Color3.fromRGB(240,238,255),
                 Font=Enum.Font.GothamBold, TextSize=11,
                 TextXAlignment=Enum.TextXAlignment.Left, Parent=b,
             })
             b.MouseEnter:Connect(function()
-                if _selectedSkin ~= skin.name then b.BackgroundColor3=Color3.fromRGB(30,28,42) end
+                if _selectedSkin ~= skin.name then b.BackgroundColor3=Color3.fromRGB(22,18,40) end
             end)
             b.MouseLeave:Connect(function()
                 if _selectedSkin ~= skin.name then b.BackgroundColor3=BG end
@@ -4978,7 +5006,7 @@ do
             btn.LayoutOrder = i
             btn.Size = refSize  -- exactly match the game's real button dimensions
 
-            local colors = SKIN_COLORS[skin.name] or { main = Color3.fromRGB(108,92,231), stroke = Color3.fromRGB(80,70,130) }
+            local colors = SKIN_COLORS[skin.name] or { main = ACCENT, stroke = Color3.fromRGB(80,70,130) }
             btn.BackgroundColor3 = colors.main
             local btnStroke = btn:FindFirstChildOfClass("UIStroke")
             if btnStroke then btnStroke.Color = colors.stroke end
@@ -5303,6 +5331,17 @@ DoSpawn = function()
                 for _, m in ipairs(spawnedModels) do
                     if m and m.Parent and (m:GetPivot().Position - sp.Position).Magnitude < 5 then
                         occupied = true; break
+                    end
+                end
+            end
+            -- FIX: also check for real game models physically present at this spawn point
+            -- (handles case where Synchronizer channel is nil/stale and serverPods is empty)
+            if not occupied then
+                for _, child in ipairs(sp.Parent and sp.Parent.Parent and sp.Parent.Parent:GetChildren() or {}) do
+                    if child:IsA("Model") and child.PrimaryPart then
+                        if (child.PrimaryPart.Position - sp.Position).Magnitude < 5 then
+                            occupied = true; break
+                        end
                     end
                 end
             end
@@ -6110,15 +6149,15 @@ do
 
         local hdrBtn = New("TextButton", {
             Size=UDim2.new(1,0,0,32),
-            BackgroundColor3=Color3.fromRGB(28,28,38),
+            BackgroundColor3=Color3.fromRGB(20,16,36),
             BorderSizePixel=0, AutoButtonColor=false, Text="",
             LayoutOrder=1, Parent=section,
         })
-        Corner(hdrBtn, 6); Stroke(hdrBtn, Color3.fromRGB(60,60,80), 1, 0.2)
+        Corner(hdrBtn, 6); Stroke(hdrBtn, BORDER, 1, 0.2)
         local arrowLbl = New("TextLabel", {
             Size=UDim2.new(1,-20,1,0), Position=UDim2.new(0,10,0,0),
             BackgroundTransparency=1, Text=(openByDefault and "▼  " or "▶  ") .. title,
-            TextColor3=Color3.fromRGB(230,230,240), Font=Enum.Font.GothamBold,
+            TextColor3=Color3.fromRGB(240,238,255), Font=Enum.Font.GothamBold,
             TextSize=11, TextXAlignment=Enum.TextXAlignment.Left, Parent=hdrBtn,
         })
 
@@ -6149,7 +6188,7 @@ do
         Size=UDim2.new(1,0,0,42), BackgroundColor3=Color3.fromRGB(24,24,32),
         BorderSizePixel=0, LayoutOrder=1, Parent=cfgContent,
     })
-    Corner(row, 6); Stroke(row, Color3.fromRGB(50,50,70), 1, 0.3)
+    Corner(row, 6); Stroke(row, BORDER, 1, 0.3)
     New("TextLabel", {
         Size=UDim2.new(0.7,-10,1,0), Position=UDim2.new(0,10,0,0),
         BackgroundTransparency=1,
@@ -6159,7 +6198,7 @@ do
     })
     local toggleBtn = New("TextButton", {
         Size=UDim2.new(0,70,0,26), Position=UDim2.new(1,-80,0.5,-13),
-        BackgroundColor3=autoRestoreEnabled and ACCENT or Color3.fromRGB(60,60,80),
+        BackgroundColor3=autoRestoreEnabled and ACCENT or BORDER,
         BorderSizePixel=0, AutoButtonColor=false,
         Text=autoRestoreEnabled and "ON" or "OFF",
         TextColor3=Color3.fromRGB(255,255,255),
@@ -6169,7 +6208,7 @@ do
     toggleBtn.Activated:Connect(function()
         autoRestoreEnabled = not autoRestoreEnabled
         toggleBtn.Text = autoRestoreEnabled and "ON" or "OFF"
-        toggleBtn.BackgroundColor3 = autoRestoreEnabled and ACCENT or Color3.fromRGB(60,60,80)
+        toggleBtn.BackgroundColor3 = autoRestoreEnabled and ACCENT or BORDER
         SaveConfig()
     end)
 
@@ -6180,7 +6219,7 @@ do
         Size=UDim2.new(1,0,0,42), BackgroundColor3=Color3.fromRGB(24,24,32),
         BorderSizePixel=0, LayoutOrder=2, Parent=cfgContent,
     })
-    Corner(row2, 6); Stroke(row2, Color3.fromRGB(50,50,70), 1, 0.3)
+    Corner(row2, 6); Stroke(row2, BORDER, 1, 0.3)
     New("TextLabel", {
         Size=UDim2.new(0.7,-10,1,0), Position=UDim2.new(0,10,0,0),
         BackgroundTransparency=1,
@@ -6190,7 +6229,7 @@ do
     })
     local saveToggleBtn = New("TextButton", {
         Size=UDim2.new(0,70,0,26), Position=UDim2.new(1,-80,0.5,-13),
-        BackgroundColor3=autoSaveEnabled and ACCENT or Color3.fromRGB(60,60,80),
+        BackgroundColor3=autoSaveEnabled and ACCENT or BORDER,
         BorderSizePixel=0, AutoButtonColor=false,
         Text=autoSaveEnabled and "ON" or "OFF",
         TextColor3=Color3.fromRGB(255,255,255),
@@ -6200,7 +6239,7 @@ do
     saveToggleBtn.Activated:Connect(function()
         autoSaveEnabled = not autoSaveEnabled
         saveToggleBtn.Text = autoSaveEnabled and "ON" or "OFF"
-        saveToggleBtn.BackgroundColor3 = autoSaveEnabled and ACCENT or Color3.fromRGB(60,60,80)
+        saveToggleBtn.BackgroundColor3 = autoSaveEnabled and ACCENT or BORDER
         -- SaveConfig itself bypasses the autoSave gate, so the toggle's own
         -- state is always persisted (the gate only governs ScheduleSave).
         SaveConfig()
@@ -6212,7 +6251,7 @@ do
         Size=UDim2.new(1,0,0,42), BackgroundColor3=Color3.fromRGB(24,24,32),
         BorderSizePixel=0, LayoutOrder=3, Parent=cfgContent,
     })
-    Corner(row3, 6); Stroke(row3, Color3.fromRGB(50,50,70), 1, 0.3)
+    Corner(row3, 6); Stroke(row3, BORDER, 1, 0.3)
     New("TextLabel", {
         Size=UDim2.new(0.7,-10,1,0), Position=UDim2.new(0,10,0,0),
         BackgroundTransparency=1,
@@ -6222,7 +6261,7 @@ do
     })
     local hookToggleBtn = New("TextButton", {
         Size=UDim2.new(0,70,0,26), Position=UDim2.new(1,-80,0.5,-13),
-        BackgroundColor3=webhookEnabled and ACCENT or Color3.fromRGB(60,60,80),
+        BackgroundColor3=webhookEnabled and ACCENT or BORDER,
         BorderSizePixel=0, AutoButtonColor=false,
         Text=webhookEnabled and "ON" or "OFF",
         TextColor3=Color3.fromRGB(255,255,255),
@@ -6232,7 +6271,7 @@ do
     hookToggleBtn.Activated:Connect(function()
         webhookEnabled = not webhookEnabled
         hookToggleBtn.Text = webhookEnabled and "ON" or "OFF"
-        hookToggleBtn.BackgroundColor3 = webhookEnabled and ACCENT or Color3.fromRGB(60,60,80)
+        hookToggleBtn.BackgroundColor3 = webhookEnabled and ACCENT or BORDER
         SaveConfig()
     end)
 
@@ -6243,7 +6282,7 @@ do
         Size=UDim2.new(1,0,0,42), BackgroundColor3=Color3.fromRGB(24,24,32),
         BorderSizePixel=0, LayoutOrder=4, Parent=cfgContent,
     })
-    Corner(row3b, 6); Stroke(row3b, Color3.fromRGB(50,50,70), 1, 0.3)
+    Corner(row3b, 6); Stroke(row3b, BORDER, 1, 0.3)
     New("TextLabel", {
         Size=UDim2.new(0.7,-10,1,0), Position=UDim2.new(0,10,0,0),
         BackgroundTransparency=1,
@@ -6253,7 +6292,7 @@ do
     })
     local hideToggleBtn = New("TextButton", {
         Size=UDim2.new(0,70,0,26), Position=UDim2.new(1,-80,0.5,-13),
-        BackgroundColor3=hideOnRejoinEnabled and ACCENT or Color3.fromRGB(60,60,80),
+        BackgroundColor3=hideOnRejoinEnabled and ACCENT or BORDER,
         BorderSizePixel=0, AutoButtonColor=false,
         Text=hideOnRejoinEnabled and "ON" or "OFF",
         TextColor3=Color3.fromRGB(255,255,255),
@@ -6263,7 +6302,7 @@ do
     hideToggleBtn.Activated:Connect(function()
         hideOnRejoinEnabled = not hideOnRejoinEnabled
         hideToggleBtn.Text = hideOnRejoinEnabled and "ON" or "OFF"
-        hideToggleBtn.BackgroundColor3 = hideOnRejoinEnabled and ACCENT or Color3.fromRGB(60,60,80)
+        hideToggleBtn.BackgroundColor3 = hideOnRejoinEnabled and ACCENT or BORDER
         local ok, err = pcall(SaveConfig)
         if ok then
             SetStatus("Hide on Rejoin: " .. (hideOnRejoinEnabled and "ON (saved)" or "OFF (saved)"),
@@ -6283,7 +6322,7 @@ do
         Size=UDim2.new(1,0,0,42), BackgroundColor3=Color3.fromRGB(24,24,32),
         BorderSizePixel=0, LayoutOrder=1, Parent=keysContent,
     })
-    Corner(row4, 6); Stroke(row4, Color3.fromRGB(50,50,70), 1, 0.3)
+    Corner(row4, 6); Stroke(row4, BORDER, 1, 0.3)
     New("TextLabel", {
         Size=UDim2.new(0.6,-10,1,0), Position=UDim2.new(0,10,0,0),
         BackgroundTransparency=1,
@@ -6293,7 +6332,7 @@ do
     })
     local keyBtn = New("TextButton", {
         Size=UDim2.new(0,140,0,26), Position=UDim2.new(1,-150,0.5,-13),
-        BackgroundColor3=Color3.fromRGB(60,60,80), BorderSizePixel=0,
+        BackgroundColor3=BORDER, BorderSizePixel=0,
         AutoButtonColor=false, Text=toggleKeyName,
         TextColor3=Color3.fromRGB(255,255,255),
         Font=Enum.Font.GothamBold, TextSize=11, Parent=row4,
@@ -6312,7 +6351,7 @@ do
             keyBtn.BackgroundColor3 = ACCENT
         else
             keyBtn.Text = toggleKeyName
-            keyBtn.BackgroundColor3 = Color3.fromRGB(60,60,80)
+            keyBtn.BackgroundColor3 = BORDER
         end
     end
 
@@ -6374,7 +6413,7 @@ do
         Size=UDim2.new(1,0,0,42), BackgroundColor3=Color3.fromRGB(24,24,32),
         BorderSizePixel=0, LayoutOrder=2, Parent=keysContent,
     })
-    Corner(row5, 6); Stroke(row5, Color3.fromRGB(50,50,70), 1, 0.3)
+    Corner(row5, 6); Stroke(row5, BORDER, 1, 0.3)
     New("TextLabel", {
         Size=UDim2.new(0.6,-10,1,0), Position=UDim2.new(0,10,0,0),
         BackgroundTransparency=1,
@@ -6384,7 +6423,7 @@ do
     })
     local rejoinBtn = New("TextButton", {
         Size=UDim2.new(0,140,0,26), Position=UDim2.new(1,-150,0.5,-13),
-        BackgroundColor3=Color3.fromRGB(60,60,80), BorderSizePixel=0,
+        BackgroundColor3=BORDER, BorderSizePixel=0,
         AutoButtonColor=false,
         Text=(rejoinKeyName ~= "" and rejoinKeyName) or "Unbound",
         TextColor3=Color3.fromRGB(255,255,255),
@@ -6404,7 +6443,7 @@ do
             rejoinBtn.BackgroundColor3 = ACCENT
         else
             rejoinBtn.Text = (rejoinKeyName ~= "" and rejoinKeyName) or "Unbound"
-            rejoinBtn.BackgroundColor3 = Color3.fromRGB(60,60,80)
+            rejoinBtn.BackgroundColor3 = BORDER
         end
     end
 
@@ -6464,7 +6503,7 @@ do
         Size=UDim2.new(1,0,0,42), BackgroundColor3=Color3.fromRGB(24,24,32),
         BorderSizePixel=0, LayoutOrder=3, Parent=keysContent,
     })
-    Corner(row6, 6); Stroke(row6, Color3.fromRGB(50,50,70), 1, 0.3)
+    Corner(row6, 6); Stroke(row6, BORDER, 1, 0.3)
     New("TextLabel", {
         Size=UDim2.new(0.6,-10,1,0), Position=UDim2.new(0,10,0,0),
         BackgroundTransparency=1,
@@ -6474,7 +6513,7 @@ do
     })
     local dupeKeyBtn = New("TextButton", {
         Size=UDim2.new(0,140,0,26), Position=UDim2.new(1,-150,0.5,-13),
-        BackgroundColor3=Color3.fromRGB(60,60,80), BorderSizePixel=0,
+        BackgroundColor3=BORDER, BorderSizePixel=0,
         AutoButtonColor=false,
         Text=(_debugDupeKeyName ~= "" and _debugDupeKeyName) or "Unbound",
         TextColor3=Color3.fromRGB(255,255,255),
@@ -6489,7 +6528,7 @@ do
             dupeKeyBtn.BackgroundColor3 = ACCENT
         else
             dupeKeyBtn.Text = (_debugDupeKeyName ~= "" and _debugDupeKeyName) or "Unbound"
-            dupeKeyBtn.BackgroundColor3 = Color3.fromRGB(60,60,80)
+            dupeKeyBtn.BackgroundColor3 = BORDER
         end
     end
     local function dkStop(commit)
@@ -6529,7 +6568,7 @@ do
         Size=UDim2.new(1,0,0,42), BackgroundColor3=Color3.fromRGB(24,24,32),
         BorderSizePixel=0, LayoutOrder=4, Parent=keysContent,
     })
-    Corner(row7, 6); Stroke(row7, Color3.fromRGB(50,50,70), 1, 0.3)
+    Corner(row7, 6); Stroke(row7, BORDER, 1, 0.3)
     New("TextLabel", {
         Size=UDim2.new(0.6,-10,1,0), Position=UDim2.new(0,10,0,0),
         BackgroundTransparency=1,
@@ -6539,7 +6578,7 @@ do
     })
     local afKeyBtn = New("TextButton", {
         Size=UDim2.new(0,140,0,26), Position=UDim2.new(1,-150,0.5,-13),
-        BackgroundColor3=Color3.fromRGB(60,60,80), BorderSizePixel=0,
+        BackgroundColor3=BORDER, BorderSizePixel=0,
         AutoButtonColor=false,
         Text=(_debugAutoFillKeyName ~= "" and _debugAutoFillKeyName) or "Unbound",
         TextColor3=Color3.fromRGB(255,255,255),
@@ -6554,7 +6593,7 @@ do
             afKeyBtn.BackgroundColor3 = ACCENT
         else
             afKeyBtn.Text = (_debugAutoFillKeyName ~= "" and _debugAutoFillKeyName) or "Unbound"
-            afKeyBtn.BackgroundColor3 = Color3.fromRGB(60,60,80)
+            afKeyBtn.BackgroundColor3 = BORDER
         end
     end
     local function afStop(commit)
@@ -6592,7 +6631,7 @@ do
         Size=UDim2.new(1,0,0,42), BackgroundColor3=Color3.fromRGB(24,24,32),
         BorderSizePixel=0, LayoutOrder=5, Parent=keysContent,
     })
-    Corner(row8, 6); Stroke(row8, Color3.fromRGB(50,50,70), 1, 0.3)
+    Corner(row8, 6); Stroke(row8, BORDER, 1, 0.3)
     New("TextLabel", {
         Size=UDim2.new(0.6,-10,1,0), Position=UDim2.new(0,10,0,0),
         BackgroundTransparency=1, Text="Trade Notification",
@@ -6601,7 +6640,7 @@ do
     })
     local tnKeyBtn = New("TextButton", {
         Size=UDim2.new(0,140,0,26), Position=UDim2.new(1,-150,0.5,-13),
-        BackgroundColor3=Color3.fromRGB(60,60,80), BorderSizePixel=0,
+        BackgroundColor3=BORDER, BorderSizePixel=0,
         AutoButtonColor=false,
         Text=(_debugTradeNotifKeyName ~= "" and _debugTradeNotifKeyName) or "Unbound",
         TextColor3=Color3.fromRGB(255,255,255),
@@ -6615,7 +6654,7 @@ do
             tnKeyBtn.BackgroundColor3 = ACCENT
         else
             tnKeyBtn.Text = (_debugTradeNotifKeyName ~= "" and _debugTradeNotifKeyName) or "Unbound"
-            tnKeyBtn.BackgroundColor3 = Color3.fromRGB(60,60,80)
+            tnKeyBtn.BackgroundColor3 = BORDER
         end
     end
     local function tnStop(commit)
@@ -6973,10 +7012,10 @@ do
         local panel = New("Frame", {
             Size = UDim2.new(0, W, 0, 360),
             Position = UDim2.new(0.5, -W/2, 0.5, -180),
-            BackgroundColor3 = Color3.fromRGB(30,28,42),
+            BackgroundColor3 = Color3.fromRGB(22,18,40),
             BorderSizePixel = 0, Parent = _signSg,
         })
-        Corner(panel, 8); Stroke(panel, Color3.fromRGB(50,45,80), 1, 0.2)
+        Corner(panel, 8); Stroke(panel, BORDER, 1, 0.2)
         MakeDraggable(panel)
 
         -- Header
@@ -7008,14 +7047,14 @@ do
         })
         local manualBox = New("TextBox", {
             Size = UDim2.new(1,-24,0,32), Position = UDim2.new(0,12,0,60),
-            BackgroundColor3 = Color3.fromRGB(24,24,30),
+            BackgroundColor3 = Color3.fromRGB(16,14,28),
             Text = _signState.manual, PlaceholderText = "What your sign should say...",
             PlaceholderColor3 = Color3.fromRGB(150,140,180),
             TextColor3 = Color3.fromRGB(230,230,240),
             Font = Enum.Font.Gotham, TextSize = 12,
             ClearTextOnFocus = false, BorderSizePixel = 0, Parent = panel,
         })
-        Corner(manualBox, 5); Stroke(manualBox, Color3.fromRGB(50,45,80), 1, 0.2)
+        Corner(manualBox, 5); Stroke(manualBox, BORDER, 1, 0.2)
         do local p=Instance.new("UIPadding",manualBox); p.PaddingLeft=UDim.new(0,8) end
 
         -- Randomize toggle
@@ -7032,7 +7071,7 @@ do
         })
         local randToggle = New("TextButton", {
             Size = UDim2.new(0,70,0,24), Position = UDim2.new(1,-70,0.5,-12),
-            BackgroundColor3 = _signState.randomEnabled and Color3.fromRGB(108,92,231) or Color3.fromRGB(60,60,80),
+            BackgroundColor3 = _signState.randomEnabled and ACCENT or BORDER,
             BorderSizePixel = 0, AutoButtonColor = false,
             Text = _signState.randomEnabled and "ON" or "OFF",
             TextColor3 = Color3.fromRGB(255,255,255),
@@ -7043,7 +7082,7 @@ do
             _signState.randomEnabled = not _signState.randomEnabled
             randToggle.Text = _signState.randomEnabled and "ON" or "OFF"
             randToggle.BackgroundColor3 = _signState.randomEnabled
-                and Color3.fromRGB(108,92,231) or Color3.fromRGB(60,60,80)
+                and ACCENT or BORDER
         end)
 
         -- Cycle interval input
@@ -7056,13 +7095,13 @@ do
         })
         local cycleBox = New("TextBox", {
             Size = UDim2.new(0,60,0,24), Position = UDim2.new(0,160,0,136),
-            BackgroundColor3 = Color3.fromRGB(24,24,30),
+            BackgroundColor3 = Color3.fromRGB(16,14,28),
             Text = tostring(_signState.cycleSec or 5),
             TextColor3 = Color3.fromRGB(230,230,240),
             Font = Enum.Font.Gotham, TextSize = 12,
             ClearTextOnFocus = false, BorderSizePixel = 0, Parent = panel,
         })
-        Corner(cycleBox, 5); Stroke(cycleBox, Color3.fromRGB(50,45,80), 1, 0.2)
+        Corner(cycleBox, 5); Stroke(cycleBox, BORDER, 1, 0.2)
 
         -- Messages list (one per line)
         New("TextLabel", {
@@ -7074,7 +7113,7 @@ do
         })
         local listBox = New("TextBox", {
             Size = UDim2.new(1,-24,0,110), Position = UDim2.new(0,12,0,186),
-            BackgroundColor3 = Color3.fromRGB(24,24,30),
+            BackgroundColor3 = Color3.fromRGB(16,14,28),
             Text = table.concat(_signState.randomList, "\n"),
             PlaceholderText = "yo\nDeal?\nL Trade\nAdd more please",
             PlaceholderColor3 = Color3.fromRGB(150,140,180),
@@ -7085,7 +7124,7 @@ do
             TextYAlignment = Enum.TextYAlignment.Top,
             BorderSizePixel = 0, Parent = panel,
         })
-        Corner(listBox, 5); Stroke(listBox, Color3.fromRGB(50,45,80), 1, 0.2)
+        Corner(listBox, 5); Stroke(listBox, BORDER, 1, 0.2)
         do local p=Instance.new("UIPadding",listBox); p.PaddingLeft=UDim.new(0,8); p.PaddingTop=UDim.new(0,4) end
 
         -- Save & Apply button
@@ -8162,6 +8201,12 @@ do
                             else return tostring(math.floor(n)) end
                         end
                         local gen2 = calcGen(animalName, mutation, traits)
+                        -- FIX: if calcGen returns 0 (animalsData failed to load), fall back
+                        -- to the hardcoded ANIMAL_DATA table so the value is never shown as $0/s
+                        if gen2 == 0 then
+                            local fd = ANIMAL_DATA[animalName]
+                            if fd and fd.gen then gen2 = fd.gen end
+                        end
                         if gen2 > 0 then sp.Cash.Text = "$"..fmt(gen2).."/s" end
                     end)
                     -- populate traits icons (snap.traits is array of names)
@@ -8366,12 +8411,12 @@ do
         -- Inline form parented to the Trading tab page (auto-flow via UIListLayout)
         local win2 = New("Frame", {
             Size=UDim2.new(1,0,0,220),
-            BackgroundColor3=Color3.fromRGB(30,28,42),
+            BackgroundColor3=Color3.fromRGB(22,18,40),
             BorderSizePixel=0, LayoutOrder=2, Parent=tradingPage,
         })
         fakeTradeWin = win2
         Corner(win2, 6)
-        Stroke(win2, Color3.fromRGB(50,45,80), 1, 0.2)
+        Stroke(win2, BORDER, 1, 0.2)
 
         -- Pop-out / dock state. When popped out, win2 lives inside this separate
         -- ScreenGui so it survives sg.Enabled toggles (the main UI hide key).
@@ -8391,14 +8436,14 @@ do
         -- Pop Out + Always-Visible toggle row (split 60/40)
         local popBtn = New("TextButton", {
             Size=UDim2.new(0.6, -pad*1.5, 0, 22), Position=UDim2.new(0, pad, 0, 8),
-            BackgroundColor3=Color3.fromRGB(108,92,231),
+            BackgroundColor3=ACCENT,
             Text="Pop Out",
             TextColor3=Color3.fromRGB(255,255,255), Font=Enum.Font.GothamBold,
             TextSize=10, AutoButtonColor=false, BorderSizePixel=0, Parent=win2,
         })
         Corner(popBtn, 5)
         popBtn.MouseEnter:Connect(function() popBtn.BackgroundColor3 = Color3.fromRGB(128,112,251) end)
-        popBtn.MouseLeave:Connect(function() popBtn.BackgroundColor3 = Color3.fromRGB(108,92,231) end)
+        popBtn.MouseLeave:Connect(function() popBtn.BackgroundColor3 = ACCENT end)
 
         local ignoreBtn = New("TextButton", {
             Size=UDim2.new(0.4, -pad*1.5, 0, 22),
@@ -8473,21 +8518,21 @@ do
         New("TextLabel", {
             Size=UDim2.new(1,-pad*2,0,14), Position=UDim2.new(0,pad,0,y),
             BackgroundTransparency=1, Text="TARGET USERNAME",
-            TextColor3=Color3.fromRGB(230,230,240), Font=Enum.Font.GothamBold,
+            TextColor3=Color3.fromRGB(240,238,255), Font=Enum.Font.GothamBold,
             TextSize=9, TextXAlignment=Enum.TextXAlignment.Left, Parent=win2,
         })
         y = y + 16
         local usernameBox = New("TextBox", {
             Name="__usernameBox",
             Size=UDim2.new(1,-pad*2,0,32), Position=UDim2.new(0,pad,0,y),
-            BackgroundColor3=Color3.fromRGB(24,24,30),
+            BackgroundColor3=Color3.fromRGB(16,14,28),
             Text="", PlaceholderText="Enter username...",
             PlaceholderColor3=Color3.fromRGB(150,140,180),
-            TextColor3=Color3.fromRGB(230,230,240), Font=Enum.Font.Gotham,
+            TextColor3=Color3.fromRGB(240,238,255), Font=Enum.Font.Gotham,
             TextSize=13, ClearTextOnFocus=false, BorderSizePixel=0, Parent=win2,
         })
         Corner(usernameBox, 5)
-        Stroke(usernameBox, Color3.fromRGB(50,45,80), 1, 0.2)
+        Stroke(usernameBox, BORDER, 1, 0.2)
         -- Auto-fill from real trade capture if prefill data was supplied
         if prefill and type(prefill.username) == "string" and prefill.username ~= "" then
             usernameBox.Text = prefill.username
@@ -8498,7 +8543,7 @@ do
         New("TextLabel", {
             Size=UDim2.new(1,-pad*2,0,14), Position=UDim2.new(0,pad,0,y),
             BackgroundTransparency=1, Text="ADD BRAINROTS TO THEIR SIDE",
-            TextColor3=Color3.fromRGB(230,230,240), Font=Enum.Font.GothamBold,
+            TextColor3=Color3.fromRGB(240,238,255), Font=Enum.Font.GothamBold,
             TextSize=9, TextXAlignment=Enum.TextXAlignment.Left, Parent=win2,
         })
         y = y + 16
@@ -8515,9 +8560,9 @@ do
         local mutW = rowW
         local animalBtn = New("TextButton", {
             Size=UDim2.new(0, animalW, 0, 32), Position=UDim2.new(0, pad, 0, y),
-            BackgroundColor3=Color3.fromRGB(24,24,30),
+            BackgroundColor3=Color3.fromRGB(16,14,28),
             Text="▼  " .. selAnimal,
-            TextColor3=Color3.fromRGB(230,230,240),
+            TextColor3=Color3.fromRGB(240,238,255),
             Font=Enum.Font.GothamBold, TextSize=11, AutoButtonColor=false,
             BorderSizePixel=0, Parent=win2,
             TextXAlignment=Enum.TextXAlignment.Left,
@@ -8525,21 +8570,21 @@ do
         })
         do local p=Instance.new("UIPadding",animalBtn); p.PaddingLeft=UDim.new(0,10); p.PaddingRight=UDim.new(0,8) end
         Corner(animalBtn, 6)
-        Stroke(animalBtn, Color3.fromRGB(50,45,80), 1, 0.2)
+        Stroke(animalBtn, BORDER, 1, 0.2)
 
         local mutBtn = New("TextButton", {
             Size=UDim2.new(0, mutW, 0, 32), Position=UDim2.new(0, pad, 0, y + 36),
-            BackgroundColor3=Color3.fromRGB(24,24,30),
+            BackgroundColor3=Color3.fromRGB(16,14,28),
             Text="▼  Mutations  •  Normal",
-            TextColor3=Color3.fromRGB(230,230,240),
+            TextColor3=Color3.fromRGB(240,238,255),
             Font=Enum.Font.GothamBold, TextSize=11, AutoButtonColor=false,
             BorderSizePixel=0, Parent=win2,
             TextXAlignment=Enum.TextXAlignment.Left,
             TextTruncate=Enum.TextTruncate.AtEnd,
         })
         do local p=Instance.new("UIPadding",mutBtn); p.PaddingLeft=UDim.new(0,10); p.PaddingRight=UDim.new(0,8) end
-        Corner(mutBtn, 6)
-        Stroke(mutBtn, Color3.fromRGB(50,45,80), 1, 0.2)
+        Corner(mutBtn, 8)
+        Stroke(mutBtn, BORDER, 1, 0.3)
 
         local function MakeDD(btn, items, cb, withImages, iconTable)
             local open, dd = false, nil
@@ -8595,14 +8640,14 @@ do
                     Size=UDim2.new(btn.Size.X.Scale, btn.Size.X.Offset, 0, ddHeight),
                     Position=UDim2.new(btn.Position.X.Scale, btn.Position.X.Offset,
                                        0, btnBottomY + 4),
-                    BackgroundColor3=Color3.fromRGB(30,28,42),
+                    BackgroundColor3=Color3.fromRGB(22,18,40),
                     BorderSizePixel=0, ZIndex=60, ClipsDescendants=true, Parent=win2,
                 })
-                Corner(dd,6); Stroke(dd,Color3.fromRGB(50,45,80),1,0.2)
+                Corner(dd,6); Stroke(dd,BORDER,1,0.2)
                 local sf = New("ScrollingFrame",{
                     Size=UDim2.new(1,-8,1,-8), Position=UDim2.new(0,4,0,4),
                     BackgroundTransparency=1, BorderSizePixel=0,
-                    ScrollBarThickness=3, ScrollBarImageColor3=Color3.fromRGB(108,92,231),
+                    ScrollBarThickness=3, ScrollBarImageColor3=ACCENT,
                     CanvasSize=UDim2.new(0,0,0,#items*(rowH+2)),
                     AutomaticCanvasSize=Enum.AutomaticSize.Y,
                     ZIndex=61, Parent=dd,
@@ -8629,7 +8674,7 @@ do
                             end
                             if rar then break end
                         end
-                        local rc = (rar and RARITY_COLORS[rar]) or Color3.fromRGB(108,92,231)
+                        local rc = (rar and RARITY_COLORS[rar]) or ACCENT
                         New("Frame", {
                             Size=UDim2.new(0,3,0.7,0), Position=UDim2.new(0,0,0.15,0),
                             BackgroundColor3=rc, BorderSizePixel=0, ZIndex=63, Parent=r,
@@ -8658,7 +8703,7 @@ do
                         New("TextLabel", {
                             Size=UDim2.new(1,-40,1,0), Position=UDim2.new(0,36,0,0),
                             BackgroundTransparency=1, Text=it,
-                            TextColor3=Color3.fromRGB(230,230,240),
+                            TextColor3=Color3.fromRGB(240,238,255),
                             Font=Enum.Font.GothamBold, TextSize=11,
                             TextXAlignment=Enum.TextXAlignment.Left,
                             TextTruncate=Enum.TextTruncate.AtEnd, ZIndex=63, Parent=r,
@@ -8683,7 +8728,7 @@ do
                         New("TextLabel", {
                             Size=UDim2.new(1,-40,1,0), Position=UDim2.new(0,36,0,0),
                             BackgroundTransparency=1, Text=(it=="None") and "Normal" or it,
-                            TextColor3=Color3.fromRGB(230,230,240),
+                            TextColor3=Color3.fromRGB(240,238,255),
                             Font=Enum.Font.GothamBold, TextSize=11,
                             TextXAlignment=Enum.TextXAlignment.Left,
                             TextTruncate=Enum.TextTruncate.AtEnd, ZIndex=63, Parent=r,
@@ -8692,14 +8737,14 @@ do
                         New("TextLabel", {
                             Size=UDim2.new(1,-12,1,0), Position=UDim2.new(0,8,0,0),
                             BackgroundTransparency=1, Text=it,
-                            TextColor3=Color3.fromRGB(230,230,240),
+                            TextColor3=Color3.fromRGB(240,238,255),
                             Font=Enum.Font.GothamBold, TextSize=11,
                             TextXAlignment=Enum.TextXAlignment.Left,
                             TextTruncate=Enum.TextTruncate.AtEnd, ZIndex=63, Parent=r,
                         })
                     end
 
-                    r.MouseEnter:Connect(function() r.BackgroundColor3=Color3.fromRGB(50,45,80) end)
+                    r.MouseEnter:Connect(function() r.BackgroundColor3=BORDER end)
                     r.MouseLeave:Connect(function() r.BackgroundColor3=BG end)
                     r.Activated:Connect(function()
                         cb(it)
@@ -8726,8 +8771,8 @@ do
         -- have to open the dropdown to remember what you picked.
         local traitsBtn = New("TextButton", {
             Size=UDim2.new(1,-pad*2,0,32), Position=UDim2.new(0,pad,0,y),
-            BackgroundColor3=Color3.fromRGB(24,24,30),
-            Text="▼  Traits", TextColor3=Color3.fromRGB(230,230,240),
+            BackgroundColor3=Color3.fromRGB(16,14,28),
+            Text="▼  Traits", TextColor3=Color3.fromRGB(240,238,255),
             Font=Enum.Font.GothamBold, TextSize=11, AutoButtonColor=false,
             BorderSizePixel=0, Parent=win2,
             TextXAlignment=Enum.TextXAlignment.Left,
@@ -8735,7 +8780,7 @@ do
         })
         do local p=Instance.new("UIPadding",traitsBtn); p.PaddingLeft=UDim.new(0,10); p.PaddingRight=UDim.new(0,8) end
         Corner(traitsBtn, 6)
-        Stroke(traitsBtn, Color3.fromRGB(50,45,80), 1, 0.2)
+        Stroke(traitsBtn, BORDER, 1, 0.2)
 
         local function refreshTraitsBtn()
             local picked = {}
@@ -8805,14 +8850,14 @@ do
                     Size=UDim2.new(traitsBtn.Size.X.Scale, traitsBtn.Size.X.Offset, 0, ddHeight),
                     Position=UDim2.new(traitsBtn.Position.X.Scale, traitsBtn.Position.X.Offset,
                                        0, btnBottomY + 4),
-                    BackgroundColor3=Color3.fromRGB(30,28,42),
+                    BackgroundColor3=Color3.fromRGB(22,18,40),
                     BorderSizePixel=0, ZIndex=60, ClipsDescendants=true, Parent=win2,
                 })
-                Corner(dd,6); Stroke(dd,Color3.fromRGB(50,45,80),1,0.2)
+                Corner(dd,6); Stroke(dd,BORDER,1,0.2)
                 local sf = New("ScrollingFrame", {
                     Size=UDim2.new(1,-8,1,-8), Position=UDim2.new(0,4,0,4),
                     BackgroundTransparency=1, BorderSizePixel=0,
-                    ScrollBarThickness=3, ScrollBarImageColor3=Color3.fromRGB(108,92,231),
+                    ScrollBarThickness=3, ScrollBarImageColor3=ACCENT,
                     CanvasSize=UDim2.new(0,0,0,#FT_TRAITS*(rowH+2)),
                     AutomaticCanvasSize=Enum.AutomaticSize.Y,
                     ZIndex=61, Parent=dd,
@@ -8840,7 +8885,7 @@ do
                     New("TextLabel", {
                         Size=UDim2.new(1,-44,1,0), Position=UDim2.new(0,36,0,0),
                         BackgroundTransparency=1, Text=tname,
-                        TextColor3=Color3.fromRGB(230,230,240),
+                        TextColor3=Color3.fromRGB(240,238,255),
                         Font=Enum.Font.GothamBold, TextSize=11,
                         TextXAlignment=Enum.TextXAlignment.Left, ZIndex=63, Parent=row,
                     })
@@ -8848,7 +8893,7 @@ do
                     -- Selected state: solid purple background (matches brainrots tab)
                     local function applyRowState()
                         if tname ~= "None" and selTraits[tname] then
-                            row.BackgroundColor3 = Color3.fromRGB(108,92,231)
+                            row.BackgroundColor3 = ACCENT
                         else
                             row.BackgroundColor3 = BG
                         end
@@ -8856,7 +8901,7 @@ do
                     applyRowState()
                     row.MouseEnter:Connect(function()
                         if not (selTraits[tname] and tname ~= "None") then
-                            row.BackgroundColor3 = Color3.fromRGB(50,45,80)
+                            row.BackgroundColor3 = BORDER
                         end
                     end)
                     row.MouseLeave:Connect(function() applyRowState() end)
@@ -8928,38 +8973,27 @@ do
                     local sp2 = f2:FindFirstChild("Spacer")
                     if sp2 then
                         pcall(function() sp2.Title.Text = item.name end)
-                        -- set gen/s value (mutation + trait modifiers stack additively
-                        -- the same way CalcGeneration computes it on the spawner side)
+                        -- FIX: use the calcGen upvalue from LaunchFakeTrade scope (same
+                        -- function used for theirItems at launch) instead of broken local
+                        -- animData/mutData which were loaded incorrectly. Also fall back
+                        -- to ANIMAL_DATA so value is never stuck at $0/s.
                         pcall(function()
-                            local aData = animData[item.name]
-                            if aData then
-                                local base = aData.Generation or 0
-                                local mult = 1
-                                if item.mutation and item.mutation ~= "None" then
-                                    local md = mutData[item.mutation]
-                                    if md and md.Modifier then mult = mult + md.Modifier end
-                                end
-                                local sleepy = false
-                                if item.traits then
-                                    for _, t in ipairs(item.traits) do
-                                        if t == "Sleepy" then
-                                            sleepy = true
-                                        elseif TRAIT_MULTIPLIERS[t] then
-                                            mult = mult + TRAIT_MULTIPLIERS[t]
-                                        end
-                                    end
-                                end
-                                local val = base * mult
-                                if sleepy then val = val * 0.5 end
-                                local cashLbl = sp2:FindFirstChild("Cash")
-                                if cashLbl then cashLbl.Text = "$"..fmt(val).."/s" end
+                            local val = calcGen(item.name, item.mutation, item.traits or {})
+                            if val == 0 then
+                                local fd = ANIMAL_DATA[item.name]
+                                if fd and fd.gen then val = fd.gen end
                             end
+                            local cashLbl = sp2:FindFirstChild("Cash")
+                            if cashLbl and val > 0 then cashLbl.Text = "$"..fmt(val).."/s" end
                         end)
-                        -- viewport animation
+                        -- FIX: viewport — ensure AttachOnViewportWithOptimizations is called
+                        -- with the correct viewport frame so the PNG renders when Add is pressed
                         pcall(function()
+                            local vp = sp2:FindFirstChild("ViewportFrame")
+                            if not vp then return end
                             local sa = GetSharedAnimals()
                             if sa and sa.AttachOnViewportWithOptimizations then
-                                sa:AttachOnViewportWithOptimizations(item.name, sp2.ViewportFrame, nil, item.mutation ~= "None" and item.mutation or nil)
+                                sa:AttachOnViewportWithOptimizations(item.name, vp, nil, item.mutation ~= "None" and item.mutation or nil)
                             end
                         end)
                         -- render trait icons on the trade entry, mirroring the
@@ -9008,20 +9042,20 @@ do
         -- separator
         New("Frame", {
             Size=UDim2.new(1,-pad*2,0,1), Position=UDim2.new(0,pad,0,y),
-            BackgroundColor3=Color3.fromRGB(50,45,80), BorderSizePixel=0, Parent=win2,
+            BackgroundColor3=BORDER, BorderSizePixel=0, Parent=win2,
         })
         y = y + 8
 
         -- Launch button
         local launchBtn = New("TextButton", {
             Size=UDim2.new(1,-pad*2,0,36), Position=UDim2.new(0,pad,0,y),
-            BackgroundColor3=Color3.fromRGB(108,92,231), Text="LAUNCH",
+            BackgroundColor3=ACCENT, Text="LAUNCH",
             TextColor3=Color3.fromRGB(255,255,255), Font=Enum.Font.GothamBold,
             TextSize=14, AutoButtonColor=false, BorderSizePixel=0, Parent=win2,
         })
         Corner(launchBtn, 6)
         launchBtn.MouseEnter:Connect(function() launchBtn.BackgroundColor3=Color3.fromRGB(128,112,251) end)
-        launchBtn.MouseLeave:Connect(function() launchBtn.BackgroundColor3=Color3.fromRGB(108,92,231) end)
+        launchBtn.MouseLeave:Connect(function() launchBtn.BackgroundColor3=ACCENT end)
         y = y + 44
 
         -- Trade Notification button (mirrors the Trade Notif Key hotkey)
