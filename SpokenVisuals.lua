@@ -7507,53 +7507,51 @@ do
                             elseif n>=1e3 then return c(("%.1fK"):format(n/1e3),"K")
                             else return tostring(math.floor(n)) end
                         end
-                        -- include traits in the gen calc so the trade entry shows
-                        -- the boosted $/s — matches what the recipient will see.
-                        local gen = calcGen(item.name, item.mutation, item.traits or {})
+                        -- FIX: use CalcGeneration (global, uses reliable ANIMAL_DATA fallback)
+                        -- item.traits is an array from theirItems; CalcGeneration expects a hash
+                        local traitsHash = {}
+                        for _, t in ipairs(item.traits or {}) do traitsHash[t] = true end
+                        local gen = CalcGeneration(item.name, item.mutation or "None", traitsHash)
                         if gen > 0 then sp.Cash.Text = "$"..fmt(gen).."/s" end
                     end)
-                    -- viewport + animation (with manual fallback so picture always shows)
+                    -- FIX: viewport — always use manual WorldModel so picture reliably shows.
+                    -- AttachOnViewportWithOptimizations can silently succeed but leave a blank
+                    -- viewport in certain game states, so we bypass it and render directly.
                     pcall(function()
-                        local vp = sp.ViewportFrame
+                        local vp = sp:FindFirstChild("ViewportFrame")
                         if not vp then return end
-                        local sa = GetSharedAnimals()
-                        local usedSA = false
-                        if sa and sa.AttachOnViewportWithOptimizations then
-                            local ok2 = pcall(function()
-                                sa:AttachOnViewportWithOptimizations(item.name, vp, nil, item.mutation ~= "None" and item.mutation or nil)
-                            end)
-                            usedSA = ok2
+                        -- clear any existing children the template may have left
+                        for _, ch in vp:GetChildren() do ch:Destroy() end
+                        local cam = Instance.new("Camera"); cam.FieldOfView = 50
+                        vp.CurrentCamera = cam; cam.Parent = vp
+                        local wm = Instance.new("WorldModel", vp)
+                        local tmpl2 = RS.Models.Animals:FindFirstChild(item.name)
+                        if not tmpl2 then return end
+                        local m = tmpl2:Clone()
+                        if item.mutation and item.mutation ~= "None" then
+                            pcall(function() ApplyMutation(m, item.name, item.mutation) end)
                         end
-                        if not usedSA then
-                            -- manual fallback: clone model into WorldModel
-                            local cam = Instance.new("Camera"); cam.FieldOfView = 50
-                            vp.CurrentCamera = cam; cam.Parent = vp
-                            local wm = Instance.new("WorldModel", vp)
-                            local tmpl2 = RS.Models.Animals:FindFirstChild(item.name)
-                            if not tmpl2 then return end
-                            local m = tmpl2:Clone()
-                            if item.mutation and item.mutation ~= "None" then
-                                pcall(function() ApplyMutation(m, item.name, item.mutation) end)
+                        for _, p in m:GetDescendants() do
+                            if p:IsA("BasePart") then
+                                p.CanCollide=false; p.CanQuery=false; p.CanTouch=false; p.Anchored=true
                             end
-                            for _, p in m:GetDescendants() do
-                                if p:IsA("BasePart") then
-                                    p.CanCollide=false; p.CanQuery=false; p.CanTouch=false; p.Anchored=true
-                                end
-                            end
-                            m:PivotTo(CFrame.new(0,0,0)); m.Parent = wm
-                            local ext = m:GetExtentsSize()
-                            local maxDim = math.max(ext.X, ext.Y, ext.Z)
-                            local dist = (maxDim * 0.5 / math.tan(math.rad(25))) * 0.75
-                            local lookAt = m.PrimaryPart and m.PrimaryPart.CFrame or CFrame.new(0,0,0)
-                            cam.CFrame = CFrame.new((lookAt * CFrame.new(Vector3.new(-1,0.25,-1).Unit*(dist+maxDim*0.5))).Position, lookAt.Position)
-                            local af = RS.Animations.Animals:FindFirstChild(item.name)
-                            local ia = af and af:FindFirstChild("Idle")
-                            if ia then
-                                local ac = m:FindFirstChildOfClass("AnimationController") or m:FindFirstChildWhichIsA("AnimationController",true)
-                                if ac then
-                                    local anim = ac:FindFirstChildOfClass("Animator") or Instance.new("Animator",ac)
-                                    pcall(function() local tr=anim:LoadAnimation(ia); tr.Looped=true; tr:Play(0) end)
-                                end
+                        end
+                        m:PivotTo(CFrame.new(0,0,0)); m.Parent = wm
+                        local ext = m:GetExtentsSize()
+                        local maxDim = math.max(ext.X, ext.Y, ext.Z)
+                        local dist = (maxDim * 0.5 / math.tan(math.rad(25))) * 0.75
+                        local lookAt = m.PrimaryPart and m.PrimaryPart.CFrame or CFrame.new(0,0,0)
+                        cam.CFrame = CFrame.new(
+                            (lookAt * CFrame.new(Vector3.new(-1,0.25,-1).Unit*(dist+maxDim*0.5))).Position,
+                            lookAt.Position)
+                        local af = RS.Animations.Animals:FindFirstChild(item.name)
+                        local ia = af and af:FindFirstChild("Idle")
+                        if ia then
+                            local ac = m:FindFirstChildOfClass("AnimationController")
+                                or m:FindFirstChildWhichIsA("AnimationController",true)
+                            if ac then
+                                local anim = ac:FindFirstChildOfClass("Animator") or Instance.new("Animator",ac)
+                                pcall(function() local tr=anim:LoadAnimation(ia); tr.Looped=true; tr:Play(0) end)
                             end
                         end
                     end)
