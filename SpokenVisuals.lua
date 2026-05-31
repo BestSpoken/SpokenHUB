@@ -1,5 +1,5 @@
 -- ══════════════════════════════════════════════════════════
---  Potion Spawner
+--  potionVisuals — Visual Spawner
 -- ══════════════════════════════════════════════════════════
 
 -- wait for the place to finish initial load before running anything;
@@ -110,7 +110,7 @@ local MUTATION_STUDS = {
 
 -- ── DATA ─────────────────────────────────────────────────
 local ANIMALS_BY_RARITY = {
-    {rarity="OG",     names={"Skibidi Toilet","Strawberry Elephant","Spyder Elephant","Headless Horseman","Meowl","John Pork"}},
+    {rarity="OG",     names={"Skibidi Toilet","Strawberry Elephant","Headless Horseman","Meowl","John Pork"}},
     {rarity="Secret", names={"Dragon Cannelloni","Garama and Madundung","Elefanto Frigo","Signore Carapace","Fragola La La La","Love Love Bear","Hydra Dragon Cannelloni","Tang Tang Keletang","Ketchuru and Musturu","Burguro And Fryuro","La Secret Combinasion","Tictac Sahur","Cerberus","Capitano Moby","Foxini Lanternini","Antonio","Ginger Gerat","Fishino Clownino","Guerriro Digitale","Ginger Globo","Cappuccino Clownino","Griffin","La Supreme Combinasion","Arcadragon","Rosey and Teddy","Hydra Bunny","Ketupat Bros","Tirilikalika Tirilikalako","Pancake and Syrup","Cash or Card","Dragon Gingerini","Globa Steppa","Gym Bros","Money Money Bros","Dug dug dug","Digi Narwhal","Popcuru and Fizzuru","Reinito Sleighito","Los Amigos","Los Sekolahs","Los Spaghettis","Spaghetti Tualetti","Spooky and Pumpky","Ventoliero Pavonero","Quackini Snackini","Sammyni Fattini","Nacho Spyder","Rosetti Tualetti","Lavadorito Spinito","Las Sis","La Casa Boo","Fragrama and Chocrama","Cooki and Milki","Bunny and Eggy","Celestial Pegasus","Chillin Chili","Chipso and Queso","Cloverat Clapat"}},
 }
 local MUTATIONS = {"None","Gold","Diamond","Bloodrot","Rainbow","Candy","Lava","Galaxy","YinYang","Radioactive","Cursed","Divine","Cyber"}
@@ -124,7 +124,6 @@ local TRAITS = {
     "Chocolate","Halo","Lucky","Orange Balloon","Green Balloon","Blue Balloon",
     "Red Balloon","Pink Balloon","Rainbow Balloon","Granny","Bunny Ears",
     "Orange Egg","Green Egg","Blue Egg","Pink Egg",
-    "Bombardiro","Extinct","Crab","Tung Tung","Concert","Starfall","Zombie Tung",
 }
 
 local TRAIT_ICONS = {
@@ -156,11 +155,6 @@ local TRAIT_ICONS = {
     ["Bunny Ears"]="rbxassetid://118516289496954",["Orange Egg"]="rbxassetid://76307362192037",
     ["Green Egg"]="rbxassetid://94602857440295",["Blue Egg"]="rbxassetid://109212886335786",
     ["Pink Egg"]="rbxassetid://133939661230277",
-    -- Newer traits added post-launch
-    ["Bombardiro"]="rbxassetid://128492624823660",["Extinct"]="rbxassetid://97054765273857",
-    ["Crab"]="rbxassetid://95792785972842",["Tung Tung"]="rbxassetid://122481678742349",
-    ["Concert"]="rbxassetid://82620342632406",["Starfall"]="rbxassetid://127455440418221",
-    ["Zombie Tung"]="rbxassetid://110723387483939",
 }
 
 -- ── HELPERS ──────────────────────────────────────────────
@@ -231,58 +225,33 @@ end
 local function Corner(p,r)
     local c=Instance.new("UICorner"); c.CornerRadius=UDim.new(0,r or 6); c.Parent=p; return c
 end
-local function MakeDraggable(frame)
-    local dragging = false
-    local dragInput
-    local dragStart
-    local startPos
-
-    local function update(input)
-        local delta = input.Position - dragStart
-        frame.Position = UDim2.new(
-            startPos.X.Scale,
-            startPos.X.Offset + delta.X,
-            startPos.Y.Scale,
-            startPos.Y.Offset + delta.Y
-        )
-    end
-
-    frame.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1
-        or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            dragStart = input.Position
-            startPos = frame.Position
-
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
-            end)
+local function MakeDraggable(frame,handle)
+    handle=handle or frame
+    local drag,ds,sp
+    handle.InputBegan:Connect(function(i)
+        if i.UserInputType==Enum.UserInputType.MouseButton1 then
+            drag=true; ds=i.Position; sp=frame.Position
         end
     end)
-
-    frame.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement
-        or input.UserInputType == Enum.UserInputType.Touch then
-            dragInput = input
-        end
+    handle.InputEnded:Connect(function(i)
+        if i.UserInputType==Enum.UserInputType.MouseButton1 then drag=false end
     end)
-
-    UserInputService.InputChanged:Connect(function(input)
-        if input == dragInput and dragging then
-            update(input)
+    UserInputService.InputChanged:Connect(function(i)
+        if drag and i.UserInputType==Enum.UserInputType.MouseMovement then
+            local d=i.Position-ds
+            frame.Position=UDim2.new(sp.X.Scale,sp.X.Offset+d.X,sp.Y.Scale,sp.Y.Offset+d.Y)
         end
     end)
 end
+local function SectionHeader(parent,text,yPos)
+    New("Frame",{Size=UDim2.new(0,3,0,14),Position=UDim2.new(0,10,0,yPos+2),BackgroundColor3=ACCENT,BorderSizePixel=0,Parent=parent})
+    New("TextLabel",{Size=UDim2.new(1,-28,0,18),Position=UDim2.new(0,18,0,yPos),Text=text:upper(),TextColor3=Color3.fromRGB(230,230,240),Font=Enum.Font.GothamBold,TextSize=9,BackgroundTransparency=1,TextXAlignment=Enum.TextXAlignment.Left,Parent=parent})
+end
 
 -- ── PLOT HELPERS ─────────────────────────────────────────
--- Plot is pinned once per session.
--- Priority order when finding YOUR plot:
---   1. A "YourBase" part/gui exists inside the plot  (game's own ownership marker)
---   2. A PlotSign / SkinPlotSign whose text contains the local player's DisplayName
---   3. Closest plot by proximity (original fallback — kept so solo-server still works)
--- Once locked, the same plot is reused until it is destroyed (e.g. rejoin).
+-- Plot is pinned once per session: the closest plot at the FIRST spawn becomes
+-- "your" plot for everything (spawning, base skins, lasers, prompts, etc.).
+-- Without this, walking near another player's plot would silently re-target it.
 local _lockedPlot = nil
 local function GetPlayerPlot()
     -- If we've already locked onto a plot and it still exists, keep using it.
@@ -290,44 +259,8 @@ local function GetPlayerPlot()
     _lockedPlot = nil  -- plot was destroyed (rejoin?) — re-pin
 
     local plots = workspace:FindFirstChild("Plots"); if not plots then return nil end
-
-    local myDisplayName = LocalPlayer.DisplayName
-    local myName        = LocalPlayer.Name
-
-    -- ── Pass 1: look for the game's "YourBase" ownership indicator ──────────
-    for _, plot in plots:GetChildren() do
-        -- The game adds a "YourBase" object (BillboardGui / Part) to the local
-        -- player's plot so the UI can show "YOUR BASE".
-        if plot:FindFirstChild("YourBase", true) then
-            _lockedPlot = plot
-            return plot
-        end
-    end
-
-    -- ── Pass 2: match PlotSign text to local player's name ──────────────────
-    for _, plot in plots:GetChildren() do
-        local function signMatches(sign)
-            if not sign then return false end
-            for _, desc in sign:GetDescendants() do
-                if (desc:IsA("TextLabel") or desc:IsA("TextButton") or desc:IsA("TextBox")) then
-                    local t = desc.Text or ""
-                    if t:find(myDisplayName, 1, true) or t:find(myName, 1, true) then
-                        return true
-                    end
-                end
-            end
-            return false
-        end
-        if signMatches(plot:FindFirstChild("PlotSign", true))
-        or signMatches(plot:FindFirstChild("SkinPlotSign", true)) then
-            _lockedPlot = plot
-            return plot
-        end
-    end
-
-    -- ── Pass 3: proximity fallback (original behaviour) ─────────────────────
     local char = LocalPlayer.Character
-    local hrp  = char and char:FindFirstChild("HumanoidRootPart")
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
     if not hrp then return nil end
     local best, bd = nil, math.huge
     for _, plot in plots:GetChildren() do
@@ -1016,7 +949,6 @@ local ANIMAL_DATA = {
     ["Spooky and Pumpky"] = {gen=80000000,price=25000000000},
     ["Squalanana"] = {gen=250000,price=45000000},
     ["Strawberry Elephant"] = {gen=750000000,price=750000000000},
-    ["Spyder Elephant"] = {gen=1000000000,price=325000000000},
     ["Swag Soda"] = {gen=13000000,price=1800000000},
     ["Swaggy Bros"] = {gen=40000000,price=7000000000},
     ["Tacorillo Crocodillo"] = {gen=12500000,price=1500000000},
@@ -1077,8 +1009,8 @@ local modelPromptInfo  = {} -- model -> {att=promptAtt, slot=slotIndex}
 -- ── CONFIG / PERSISTENCE ─────────────────────────────────
 -- save the list of currently-spawned brainrots to disk so the same set can
 -- be restored on next script run. all data is purely client-side visual.
-local CONFIG_FILE = "PotionSpawner_spawns.json"
-local INDEX_FILE  = "PotionSpawner_index.json"
+local CONFIG_FILE = "KingVisuals_spawns.json"
+local INDEX_FILE  = "KingVisuals_index.json"
 local _hs = game:GetService("HttpService")
 local _indexDiscoveries = {} -- { [animalName] = { "None", "Gold", ... } }
 
@@ -1689,7 +1621,6 @@ if type(LRM_SEND_WEBHOOK) ~= "function" then
         end)
     end
 end
-
 
 local function _hasFileApi()
     return type(writefile) == "function"
@@ -3191,14 +3122,6 @@ local TRAIT_ICONS = {
     ["Wet"]             = "rbxassetid://78474194088770",
     ["Witch Hat"]       = "rbxassetid://123964048606874",
     ["Zombie"]          = "rbxassetid://110723387483939",
-    -- Newer traits added post-launch
-    ["Bombardiro"]      = "rbxassetid://128492624823660",
-    ["Extinct"]         = "rbxassetid://97054765273857",
-    ["Crab"]            = "rbxassetid://95792785972842",
-    ["Tung Tung"]       = "rbxassetid://122481678742349",
-    ["Concert"]         = "rbxassetid://82620342632406",
-    ["Starfall"]        = "rbxassetid://127455440418221",
-    ["Zombie Tung"]     = "rbxassetid://110723387483939",
 }
 
 local function Stroke(parent, color, thickness, trans)
@@ -3214,7 +3137,7 @@ local function _buildAndRun()
 
 -- ── ROOT GUI ─────────────────────────────────────────────
 local sg = New("ScreenGui", {
-    Name="PotionSpawner", ResetOnSpawn=false, IgnoreGuiInset=true,
+    Name="KingVisualsSpawner", ResetOnSpawn=false, IgnoreGuiInset=true,
     ZIndexBehavior=Enum.ZIndexBehavior.Sibling, DisplayOrder=5000,
     Parent=GetSafeParent(),
 })
@@ -3261,12 +3184,12 @@ Corner(tbar, 8)
 New("Frame", {Size=UDim2.new(1,0,0.5,0), Position=UDim2.new(0,0,0.5,0), BackgroundColor3=Color3.fromRGB(30,28,42), BorderSizePixel=0, Parent=tbar})
 New("TextLabel", {
     Size=UDim2.new(1,-20,1,0), Position=UDim2.new(0,10,0,0),
-    Text="Potion Spawner",
+    Text="Potion scripts best visuals oat",
     TextColor3=Color3.fromRGB(230,230,240), Font=Enum.Font.GothamSemibold,
     TextSize=10, BackgroundTransparency=1,
     TextXAlignment=Enum.TextXAlignment.Left, Parent=tbar,
 })
-MakeDraggable(win)
+MakeDraggable(win, tbar)
 
 -- restore last-known window position (if saved) and persist on every move.
 if savedWindowPos then
@@ -5322,7 +5245,7 @@ DoSpawn = function()
     -- find first available slot — skip slots with our fake models OR real server animals
     local slotIndex = nil
     local spawnPart = nil
-    -- get server AnimalPodiums to skip real occupied slots (sync channel, may be stale)
+    -- get server AnimalPodiums to skip real occupied slots
     local serverPods = {}
     pcall(function()
         local ch = GetSyncChannel()
@@ -5330,64 +5253,24 @@ DoSpawn = function()
     end)
     -- build sorted podium key list matching podiumSpawns order
     local sortedPodiumNames = {}
-    local podiumsByKey = {}   -- podiumKey -> podium Instance (for direct workspace scan)
     if plot then
         local podiums2 = plot:FindFirstChild("AnimalPodiums")
         if podiums2 then
             for _, pod in podiums2:GetChildren() do
                 local n = tonumber(pod.Name)
-                if n then
-                    table.insert(sortedPodiumNames, n)
-                    podiumsByKey[n] = pod
-                end
+                if n then table.insert(sortedPodiumNames, n) end
             end
             table.sort(sortedPodiumNames)
         end
     end
-
-    -- Helper: returns true if a real (non-KVSpawned) animal model is sitting in this podium
-    -- Uses TWO methods so at least one catches it even when the sync channel is stale:
-    --   1. Sync channel server data (fast, may be outdated on first spawn)
-    --   2. Direct workspace scan of every BasePart near the spawn position that
-    --      is NOT tagged KVSpawned (catches real brainrots placed moments ago)
-    local function IsSlotOccupiedByReal(podiumKey, spawnPos)
-        -- Method 1: sync channel
-        local serverAnimal = serverPods[podiumKey]
-        if serverAnimal ~= nil and serverAnimal ~= "Empty" then return true end
-        -- Method 2: workspace proximity scan — real brainrot models are parented
-        -- under the podium Base or workspace and are NOT tagged KVSpawned
-        local pod = podiumsByKey[podiumKey]
-        if pod then
-            local base = pod:FindFirstChild("Base")
-            if base then
-                for _, child in base:GetChildren() do
-                    if child:IsA("Model") and not child:GetAttribute("KVSpawned") then
-                        return true
-                    end
-                end
-            end
-        end
-        -- Method 3: position proximity scan for any non-KV model near the spawn
-        if spawnPos then
-            for _, obj in workspace:GetChildren() do
-                if obj:IsA("Model") and not obj:GetAttribute("KVSpawned") then
-                    local pp = obj.PrimaryPart
-                    if pp and (pp.Position - spawnPos).Magnitude < 4 then
-                        return true
-                    end
-                end
-            end
-        end
-        return false
-    end
-
     -- if a slot override is requested (e.g. restore from save), look only at
     -- that specific podium and skip the first-available scan.
     if _slotOverride then
         for i, sp in ipairs(podiumSpawns) do
             if sortedPodiumNames[i] == _slotOverride then
                 local podiumKey = sortedPodiumNames[i]
-                local occupied = IsSlotOccupiedByReal(podiumKey, sp.Position)
+                local serverAnimal = podiumKey and serverPods[podiumKey]
+                local occupied = serverAnimal ~= nil and serverAnimal ~= "Empty"
                 if not occupied then
                     for _, m in ipairs(spawnedModels) do
                         if m and m.Parent and (m:GetPivot().Position - sp.Position).Magnitude < 5 then
@@ -5407,10 +5290,13 @@ DoSpawn = function()
     if not slotIndex then
         for i, sp in ipairs(podiumSpawns) do
             local occupied = false
+            -- skip if real server animal is here
             local podiumKey = sortedPodiumNames[i]
-            -- skip if real server animal is here (triple-check with workspace scan)
-            if podiumKey and IsSlotOccupiedByReal(podiumKey, sp.Position) then
-                occupied = true
+            if podiumKey then
+                local serverAnimal = serverPods[podiumKey]
+                if serverAnimal ~= nil and serverAnimal ~= "Empty" then
+                    occupied = true
+                end
             end
             -- skip if our fake animal is here
             if not occupied then
@@ -5421,7 +5307,7 @@ DoSpawn = function()
                 end
             end
             if not occupied then
-                slotIndex = sortedPodiumNames[i] or i
+                slotIndex = sortedPodiumNames[i] or i  -- use actual podium name, not array index
                 spawnPart = sp
                 break
             end
@@ -6635,75 +6521,13 @@ do
     dupeKeyBtn.Activated:Connect(function() if dkListening then dkStop(false) else dkStart() end end)
     end -- dupeKey row scope
 
-    -- ── "Dupe Now" instant button ─────────────────────────
-    -- Clicking this immediately dupes whatever was received in the last real
-    -- trade — no hotkey needed.  Works whenever _lastReceivedItems is set,
-    -- i.e. after someone trades you something in a real trade.
-    do
-    local dupeNowRow = New("Frame", {
-        Size=UDim2.new(1,0,0,42), BackgroundColor3=Color3.fromRGB(24,24,32),
-        BorderSizePixel=0, LayoutOrder=4, Parent=keysContent,
-    })
-    Corner(dupeNowRow, 6); Stroke(dupeNowRow, Color3.fromRGB(50,50,70), 1, 0.3)
-    New("TextLabel", {
-        Size=UDim2.new(0.58,-10,1,0), Position=UDim2.new(0,10,0,0),
-        BackgroundTransparency=1,
-        Text="Dupe Last Pet",
-        TextColor3=Color3.fromRGB(220,220,230), Font=Enum.Font.Gotham,
-        TextSize=12, TextXAlignment=Enum.TextXAlignment.Left, Parent=dupeNowRow,
-    })
-    local dupeNowStatusLbl = New("TextLabel", {
-        Size=UDim2.new(0.42,-160,1,0), Position=UDim2.new(0.58,0,0,0),
-        BackgroundTransparency=1,
-        Text="No trade yet",
-        TextColor3=Color3.fromRGB(140,140,160), Font=Enum.Font.Gotham,
-        TextSize=10, TextXAlignment=Enum.TextXAlignment.Left,
-        TextTruncate=Enum.TextTruncate.AtEnd, Parent=dupeNowRow,
-    })
-    local dupeNowBtn = New("TextButton", {
-        Size=UDim2.new(0,110,0,26), Position=UDim2.new(1,-120,0.5,-13),
-        BackgroundColor3=Color3.fromRGB(80,185,70), BorderSizePixel=0,
-        AutoButtonColor=false,
-        Text="⧉  Dupe Now",
-        TextColor3=Color3.fromRGB(255,255,255),
-        Font=Enum.Font.GothamBold, TextSize=12, Parent=dupeNowRow,
-    })
-    Corner(dupeNowBtn, 5)
-    -- Keep the status label and button colour in sync with trade data
-    local function refreshDupeNow()
-        local items = (_lastReceivedItems and #_lastReceivedItems > 0) and _lastReceivedItems or nil
-        if (not items) and _lastReceivedItem then items = { _lastReceivedItem } end
-        if items and #items > 0 then
-            local names = {}
-            for _, it in ipairs(items) do table.insert(names, it.name) end
-            dupeNowStatusLbl.Text = table.concat(names, ", ")
-            dupeNowStatusLbl.TextColor3 = Color3.fromRGB(100,220,100)
-            dupeNowBtn.BackgroundColor3 = Color3.fromRGB(80,185,70)
-        else
-            dupeNowStatusLbl.Text = "No trade yet"
-            dupeNowStatusLbl.TextColor3 = Color3.fromRGB(140,140,160)
-            dupeNowBtn.BackgroundColor3 = Color3.fromRGB(60,60,80)
-        end
-    end
-    refreshDupeNow()
-    dupeNowBtn.MouseEnter:Connect(function()
-        local items = (_lastReceivedItems and #_lastReceivedItems > 0) and _lastReceivedItems
-        dupeNowBtn.BackgroundColor3 = items and Color3.fromRGB(100,210,85) or Color3.fromRGB(75,75,95)
-    end)
-    dupeNowBtn.MouseLeave:Connect(function() refreshDupeNow() end)
-    dupeNowBtn.Activated:Connect(function()
-        _doDupeReceived()
-        task.delay(0.1, refreshDupeNow)
-    end)
-    -- Refresh label whenever the tab is opened (trade may have happened since)
-    tabMisc.Activated:Connect(refreshDupeNow)
-    end -- dupeNow row scope
+    -- ── DEBUG: Auto-Fill Trade Key ────────────────────────
     -- Press to open Trade Setup pre-filled with the username and offered items
     -- captured from the most recent real trade session.  Visual-only.
     do
     local row7 = New("Frame", {
         Size=UDim2.new(1,0,0,42), BackgroundColor3=Color3.fromRGB(24,24,32),
-        BorderSizePixel=0, LayoutOrder=5, Parent=keysContent,
+        BorderSizePixel=0, LayoutOrder=4, Parent=keysContent,
     })
     Corner(row7, 6); Stroke(row7, Color3.fromRGB(50,50,70), 1, 0.3)
     New("TextLabel", {
@@ -6766,7 +6590,12 @@ do
     do
     local row8 = New("Frame", {
         Size=UDim2.new(1,0,0,42), BackgroundColor3=Color3.fromRGB(24,24,32),
-        BorderSizePixel=0, LayoutOrder=6, Parent=keysContent,
+        BorderSizePixel=0, LayoutOrder=5, Parent=keysContent,
+    })
+    Corner(row8, 6); Stroke(row8, Color3.fromRGB(50,50,70), 1, 0.3)
+    New("TextLabel", {
+        Size=UDim2.new(0.6,-10,1,0), Position=UDim2.new(0,10,0,0),
+        BackgroundTransparency=1, Text="Trade Notification",
         TextColor3=Color3.fromRGB(220,220,230), Font=Enum.Font.Gotham,
         TextSize=12, TextXAlignment=Enum.TextXAlignment.Left, Parent=row8,
     })
@@ -7639,10 +7468,9 @@ do
                             elseif n>=1e3 then return c(("%.1fK"):format(n/1e3),"K")
                             else return tostring(math.floor(n)) end
                         end
-                        -- use CalcGeneration for consistent results across the whole script
-                        local traitsHash2 = {}
-                        for _, t in ipairs(item.traits or {}) do traitsHash2[t] = true end
-                        local gen = CalcGeneration(item.name, item.mutation, traitsHash2)
+                        -- include traits in the gen calc so the trade entry shows
+                        -- the boosted $/s — matches what the recipient will see.
+                        local gen = calcGen(item.name, item.mutation, item.traits or {})
                         if gen > 0 then sp.Cash.Text = "$"..fmt(gen).."/s" end
                     end)
                     -- viewport + animation
@@ -7650,40 +7478,9 @@ do
                         local sa = GetSharedAnimals()
                         if sa and sa.AttachOnViewportWithOptimizations then
                             sa:AttachOnViewportWithOptimizations(item.name, sp.ViewportFrame, nil, item.mutation ~= "None" and item.mutation or nil)
-                        else
-                            -- Fallback: manually load model so picture always shows
-                            local vp3 = sp:FindFirstChild("ViewportFrame")
-                            if not vp3 then return end
-                            local ok3, tmpl3 = pcall(function() return RS.Models.Animals:FindFirstChild(item.name) end)
-                            if not ok3 or not tmpl3 then return end
-                            local cam3 = Instance.new("Camera"); vp3.CurrentCamera = cam3; cam3.Parent = vp3
-                            local wm3 = Instance.new("WorldModel", vp3)
-                            local m3 = tmpl3:Clone()
-                            pcall(ApplyMutation, m3, item.name, item.mutation)
-                            for _, v3 in m3:GetDescendants() do
-                                if v3:IsA("BasePart") then
-                                    v3.CanCollide=false; v3.CanQuery=false
-                                    v3.CanTouch=false; v3.Anchored=true; v3.CastShadow=false
-                                end
-                            end
-                            m3:PivotTo(CFrame.new(0,0,0)); m3.Parent = wm3
-                            local minY3,maxY3,maxX3,maxZ3 = math.huge,-math.huge,0,0
-                            for _, p3 in m3:GetDescendants() do
-                                if p3:IsA("BasePart") and p3.Name ~= "HumanoidRootPart" then
-                                    local sz=p3.Size; local py=p3.Position.Y
-                                    minY3=math.min(minY3,py-sz.Y*0.5); maxY3=math.max(maxY3,py+sz.Y*0.5)
-                                    maxX3=math.max(maxX3,sz.X); maxZ3=math.max(maxZ3,sz.Z)
-                                end
-                            end
-                            if minY3==math.huge then minY3=0; maxY3=2; maxX3=2; maxZ3=2 end
-                            local maxDim3 = math.max(maxX3, maxY3-minY3, maxZ3)
-                            cam3.FieldOfView = 50
-                            local DIR3 = Vector3.new(-1, 0.25, -1).Unit
-                            local dist3 = (maxDim3*0.5 / math.tan(math.rad(25))) * 0.75
-                            local lookAt3 = m3.PrimaryPart and m3.PrimaryPart.CFrame or CFrame.new(0,(maxY3+minY3)*0.5,0)
-                            cam3.CFrame = CFrame.new((lookAt3 * CFrame.new(DIR3 * (dist3 + maxDim3 * 0.5))).Position, lookAt3.Position)
                         end
                     end)
+                    -- render trait icons (matches the live-overhead Traits row)
                     pcall(function()
                         if not item.traits or #item.traits == 0 then return end
                         local traitsFrame = sp:FindFirstChild("Traits")
@@ -8364,11 +8161,8 @@ do
                             elseif n>=1e3 then return c(("%.1fK"):format(n/1e3),"K")
                             else return tostring(math.floor(n)) end
                         end
-                        local traitsHash4 = {}
-                        for _, t in ipairs(traits or {}) do traitsHash4[t] = true end
-                        local gen2 = CalcGeneration(animalName, mutation, traitsHash4)
-                        -- always overwrite so stale template text never shows
-                        sp.Cash.Text = "$"..(gen2 > 0 and fmt(gen2) or "0").."/s"
+                        local gen2 = calcGen(animalName, mutation, traits)
+                        if gen2 > 0 then sp.Cash.Text = "$"..fmt(gen2).."/s" end
                     end)
                     -- populate traits icons (snap.traits is array of names)
                     pcall(function()
@@ -9134,51 +8928,38 @@ do
                     local sp2 = f2:FindFirstChild("Spacer")
                     if sp2 then
                         pcall(function() sp2.Title.Text = item.name end)
-                        -- set gen/s value using CalcGeneration for consistency
+                        -- set gen/s value (mutation + trait modifiers stack additively
+                        -- the same way CalcGeneration computes it on the spawner side)
                         pcall(function()
-                            local traitsHash3 = {}
-                            for _, t in ipairs(item.traits or {}) do traitsHash3[t] = true end
-                            local val = CalcGeneration(item.name, item.mutation, traitsHash3)
-                            local cashLbl = sp2:FindFirstChild("Cash")
-                            if cashLbl then cashLbl.Text = "$"..fmt(val).."/s" end
+                            local aData = animData[item.name]
+                            if aData then
+                                local base = aData.Generation or 0
+                                local mult = 1
+                                if item.mutation and item.mutation ~= "None" then
+                                    local md = mutData[item.mutation]
+                                    if md and md.Modifier then mult = mult + md.Modifier end
+                                end
+                                local sleepy = false
+                                if item.traits then
+                                    for _, t in ipairs(item.traits) do
+                                        if t == "Sleepy" then
+                                            sleepy = true
+                                        elseif TRAIT_MULTIPLIERS[t] then
+                                            mult = mult + TRAIT_MULTIPLIERS[t]
+                                        end
+                                    end
+                                end
+                                local val = base * mult
+                                if sleepy then val = val * 0.5 end
+                                local cashLbl = sp2:FindFirstChild("Cash")
+                                if cashLbl then cashLbl.Text = "$"..fmt(val).."/s" end
+                            end
                         end)
                         -- viewport animation
                         pcall(function()
                             local sa = GetSharedAnimals()
                             if sa and sa.AttachOnViewportWithOptimizations then
                                 sa:AttachOnViewportWithOptimizations(item.name, sp2.ViewportFrame, nil, item.mutation ~= "None" and item.mutation or nil)
-                            else
-                                -- Fallback: manually load model into viewport so the picture always shows
-                                local vp2 = sp2:FindFirstChild("ViewportFrame")
-                                if not vp2 then return end
-                                local ok2, tmpl2 = pcall(function() return RS.Models.Animals:FindFirstChild(item.name) end)
-                                if not ok2 or not tmpl2 then return end
-                                local cam2 = Instance.new("Camera"); vp2.CurrentCamera = cam2; cam2.Parent = vp2
-                                local wm2 = Instance.new("WorldModel", vp2)
-                                local m2 = tmpl2:Clone()
-                                pcall(ApplyMutation, m2, item.name, item.mutation)
-                                for _, v2 in m2:GetDescendants() do
-                                    if v2:IsA("BasePart") then
-                                        v2.CanCollide=false; v2.CanQuery=false
-                                        v2.CanTouch=false; v2.Anchored=true; v2.CastShadow=false
-                                    end
-                                end
-                                m2:PivotTo(CFrame.new(0,0,0)); m2.Parent = wm2
-                                local minY,maxY2,maxX,maxZ = math.huge,-math.huge,0,0
-                                for _, p2 in m2:GetDescendants() do
-                                    if p2:IsA("BasePart") and p2.Name ~= "HumanoidRootPart" then
-                                        local sz=p2.Size; local py=p2.Position.Y
-                                        minY=math.min(minY,py-sz.Y*0.5); maxY2=math.max(maxY2,py+sz.Y*0.5)
-                                        maxX=math.max(maxX,sz.X); maxZ=math.max(maxZ,sz.Z)
-                                    end
-                                end
-                                if minY==math.huge then minY=0; maxY2=2; maxX=2; maxZ=2 end
-                                local maxDim = math.max(maxX, maxY2-minY, maxZ)
-                                cam2.FieldOfView = 50
-                                local DIR = Vector3.new(-1, 0.25, -1).Unit
-                                local dist = (maxDim*0.5 / math.tan(math.rad(25))) * 0.75
-                                local lookAt = m2.PrimaryPart and m2.PrimaryPart.CFrame or CFrame.new(0,(maxY2+minY)*0.5,0)
-                                cam2.CFrame = CFrame.new((lookAt * CFrame.new(DIR * (dist + maxDim * 0.5))).Position, lookAt.Position)
                             end
                         end)
                         -- render trait icons on the trade entry, mirroring the
@@ -9420,10 +9201,10 @@ UserInputService.InputBegan:Connect(function(input, processed)
     end
 end)
 
--- ── TRADE REQUEST NOTIFICATION (1:1 SAB replica) ─────────
--- Orange/red gradient card centred on screen.
--- "Trade Request" in bold yellow, "@user wants to trade with you" in white,
--- two wide buttons: green Accept | red Decline — exactly matching the real popup.
+-- ── DEBUG: Trade Notif Trigger ────────────────────────────
+-- Clones the real game's TradePrompts.Prompt frame from PlayerGui and adds it
+-- via CornerNotificationController — identical to the real game's trade invite.
+-- Yes button launches LaunchFakeTrade. No button dismisses. No remotes fired.
 local _fakeNotifOpen = false
 _triggerTradeNotif = function(overrideUsername)
     if _fakeNotifOpen then return end
@@ -9431,12 +9212,14 @@ _triggerTradeNotif = function(overrideUsername)
         SetStatus("A fake trade is already open!", Color3.fromRGB(255,100,50), 2)
         return
     end
-    -- Resolve username: explicit arg > username box in Trading tab > last captured trade
+    -- Resolve a username: explicit arg > trade-setup form's username box > captured trade
     local username = overrideUsername
     if not username or username == "" then
         local pg = LocalPlayer:FindFirstChild("PlayerGui")
         local box = pg and pg:FindFirstChild("__usernameBox", true)
-        if box and box.Text and box.Text ~= "" then username = box.Text end
+        if box and box.Text and box.Text ~= "" then
+            username = box.Text
+        end
     end
     if (not username or username == "") and _lastRealTradeCapture then
         username = _lastRealTradeCapture.username
@@ -9447,178 +9230,34 @@ _triggerTradeNotif = function(overrideUsername)
     end
     _fakeNotifOpen = true
 
-    local TweenService = game:GetService("TweenService")
-
-    -- ── ScreenGui ──────────────────────────────────────────
-    local gui = Instance.new("ScreenGui")
-    gui.Name            = "KV_TradeNotifToast"
-    gui.ResetOnSpawn    = false
-    gui.DisplayOrder    = 9999
-    gui.IgnoreGuiInset  = true
-    gui.ZIndexBehavior  = Enum.ZIndexBehavior.Sibling
-    gui.Parent          = GetSafeParent()
-
-    -- ── Dimensions (matches real SAB card proportions) ─────
-    -- Real card is roughly 260 wide × 110 tall at 1080p
-    local CARD_W = 260
-    local CARD_H = 110
-    local BTN_H  = 34
-    local PAD    = 10
-
-    -- ── Outer card — centred, orange→red gradient via gradient ──
-    local card = Instance.new("Frame")
-    card.Name             = "Card"
-    card.Size             = UDim2.new(0, CARD_W, 0, CARD_H)
-    card.Position         = UDim2.new(0.5, -CARD_W/2, 0.5, -(CARD_H/2) - 40)
-    card.BackgroundColor3 = Color3.fromRGB(210, 90, 20)   -- base orange (gradient overlays)
-    card.BorderSizePixel  = 0
-    card.ClipsDescendants = true
-    card.Parent           = gui
-    -- Rounded corners — same radius as real SAB popup
-    local cardCorner = Instance.new("UICorner")
-    cardCorner.CornerRadius = UDim.new(0, 8)
-    cardCorner.Parent = card
-
-    -- Orange → dark-red gradient (left to right, matching screenshot)
-    local grad = Instance.new("UIGradient")
-    grad.Color    = ColorSequence.new({
-        ColorSequenceKeypoint.new(0,   Color3.fromRGB(230, 120, 10)),   -- bright orange left
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(200, 60,  10)),   -- mid orange-red
-        ColorSequenceKeypoint.new(1,   Color3.fromRGB(160, 20,  10)),   -- deep red right
-    })
-    grad.Rotation = 0   -- horizontal
-    grad.Parent   = card
-
-    -- Thin dark border stroke to match real card edge
-    local stroke = Instance.new("UIStroke")
-    stroke.Color       = Color3.fromRGB(100, 30, 5)
-    stroke.Thickness   = 2
-    stroke.Transparency = 0.2
-    stroke.Parent      = card
-
-    -- ── "Trade Request" header ─────────────────────────────
-    -- Bold, yellow-gold, left-aligned — exactly as seen in the screenshot
-    local headerLbl = Instance.new("TextLabel")
-    headerLbl.Size                  = UDim2.new(1, -PAD*2, 0, 28)
-    headerLbl.Position              = UDim2.new(0, PAD, 0, 6)
-    headerLbl.BackgroundTransparency = 1
-    headerLbl.Text                  = "Trade Request"
-    headerLbl.TextSize              = 18
-    headerLbl.Font                  = Enum.Font.GothamBlack
-    headerLbl.TextColor3            = Color3.fromRGB(255, 225, 50)   -- bright yellow-gold
-    headerLbl.TextXAlignment        = Enum.TextXAlignment.Left
-    headerLbl.TextYAlignment        = Enum.TextYAlignment.Center
-    -- Subtle drop shadow via a second label 1px offset
-    headerLbl.TextStrokeColor3      = Color3.fromRGB(80, 20, 0)
-    headerLbl.TextStrokeTransparency = 0.4
-    headerLbl.Parent                = card
-
-    -- ── "@user wants to trade with you" body text ──────────
-    -- White, slightly smaller, wraps if username is long
-    local msgLbl = Instance.new("TextLabel")
-    msgLbl.Size                  = UDim2.new(1, -PAD*2, 0, 28)
-    msgLbl.Position              = UDim2.new(0, PAD, 0, 34)
-    msgLbl.BackgroundTransparency = 1
-    msgLbl.Text                  = ("@%s wants to trade\nwith you"):format(username)
-    msgLbl.TextSize              = 13
-    msgLbl.Font                  = Enum.Font.GothamBold
-    msgLbl.TextColor3            = Color3.fromRGB(255, 255, 255)
-    msgLbl.TextXAlignment        = Enum.TextXAlignment.Left
-    msgLbl.TextYAlignment        = Enum.TextYAlignment.Top
-    msgLbl.TextWrapped           = true
-    msgLbl.TextStrokeColor3      = Color3.fromRGB(0, 0, 0)
-    msgLbl.TextStrokeTransparency = 0.6
-    msgLbl.Parent                = card
-
-    -- ── Button row ─────────────────────────────────────────
-    -- Two equal-width buttons spanning the full card width, small gap between
-    local BTN_Y     = CARD_H - BTN_H - PAD
-    local GAP       = 6
-    local BTN_W     = (CARD_W - PAD*2 - GAP) / 2
-
-    -- Accept button (green)
-    local acceptBtn = Instance.new("TextButton")
-    acceptBtn.Size             = UDim2.new(0, BTN_W, 0, BTN_H)
-    acceptBtn.Position         = UDim2.new(0, PAD, 0, BTN_Y)
-    acceptBtn.BackgroundColor3 = Color3.fromRGB(80, 185, 70)
-    acceptBtn.BorderSizePixel  = 0
-    acceptBtn.Text             = "Accept"
-    acceptBtn.TextSize         = 15
-    acceptBtn.Font             = Enum.Font.GothamBlack
-    acceptBtn.TextColor3       = Color3.fromRGB(255, 255, 255)
-    acceptBtn.AutoButtonColor  = false
-    acceptBtn.Parent           = card
-    local acCorner = Instance.new("UICorner")
-    acCorner.CornerRadius = UDim.new(0, 6)
-    acCorner.Parent = acceptBtn
-    local acStroke = Instance.new("UIStroke")
-    acStroke.Color = Color3.fromRGB(40, 120, 40); acStroke.Thickness = 1.5; acStroke.Transparency = 0.3
-    acStroke.Parent = acceptBtn
-
-    -- Decline button (red)
-    local declineBtn = Instance.new("TextButton")
-    declineBtn.Size             = UDim2.new(0, BTN_W, 0, BTN_H)
-    declineBtn.Position         = UDim2.new(0, PAD + BTN_W + GAP, 0, BTN_Y)
-    declineBtn.BackgroundColor3 = Color3.fromRGB(210, 55, 45)
-    declineBtn.BorderSizePixel  = 0
-    declineBtn.Text             = "Decline"
-    declineBtn.TextSize         = 15
-    declineBtn.Font             = Enum.Font.GothamBlack
-    declineBtn.TextColor3       = Color3.fromRGB(255, 255, 255)
-    declineBtn.AutoButtonColor  = false
-    declineBtn.Parent           = card
-    local dcCorner = Instance.new("UICorner")
-    dcCorner.CornerRadius = UDim.new(0, 6)
-    dcCorner.Parent = declineBtn
-    local dcStroke = Instance.new("UIStroke")
-    dcStroke.Color = Color3.fromRGB(130, 30, 20); dcStroke.Thickness = 1.5; dcStroke.Transparency = 0.3
-    dcStroke.Parent = declineBtn
-
-    -- Hover effects
-    acceptBtn.MouseEnter:Connect(function()  acceptBtn.BackgroundColor3  = Color3.fromRGB(100, 210, 85)  end)
-    acceptBtn.MouseLeave:Connect(function()  acceptBtn.BackgroundColor3  = Color3.fromRGB(80, 185, 70)   end)
-    declineBtn.MouseEnter:Connect(function() declineBtn.BackgroundColor3 = Color3.fromRGB(235, 75, 60)   end)
-    declineBtn.MouseLeave:Connect(function() declineBtn.BackgroundColor3 = Color3.fromRGB(210, 55, 45)   end)
-
-    -- ── Pop-in animation (scale from 0.8 → 1, fade in) ────
-    -- Real SAB uses a quick scale-bounce pop-in from centre
-    card.Size = UDim2.new(0, CARD_W * 0.8, 0, CARD_H * 0.8)
-    card.Position = UDim2.new(0.5, -(CARD_W * 0.8)/2, 0.5, -(CARD_H * 0.8)/2 - 40)
-    TweenService:Create(card, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-        Size     = UDim2.new(0, CARD_W, 0, CARD_H),
-        Position = UDim2.new(0.5, -CARD_W/2, 0.5, -CARD_H/2 - 40),
-    }):Play()
-
-    -- ── Dismiss logic ──────────────────────────────────────
-    local dismissed = false
-    local function dismissNotif(instant)
-        if dismissed then return end
-        dismissed = true
+    local function closeNotif(remove)
         _fakeNotifOpen = false
-        if instant then
-            pcall(function() gui:Destroy() end)
-        else
-            -- Pop-out: scale down and fade
-            local t = TweenService:Create(card,
-                TweenInfo.new(0.15, Enum.EasingStyle.Quint, Enum.EasingDirection.In), {
-                Size     = UDim2.new(0, CARD_W * 0.75, 0, CARD_H * 0.75),
-                Position = UDim2.new(0.5, -(CARD_W*0.75)/2, 0.5, -(CARD_H*0.75)/2 - 40),
-            })
-            t:Play()
-            t.Completed:Connect(function() pcall(function() gui:Destroy() end) end)
-        end
+        if remove then pcall(remove) end
     end
 
-    acceptBtn.Activated:Connect(function()
-        dismissNotif(true)
-        LaunchFakeTrade(username, {})
-    end)
-    declineBtn.Activated:Connect(function()
-        dismissNotif(false)
-    end)
+    pcall(function()
+        local pg = LocalPlayer.PlayerGui
+        local promptTemplate = pg:WaitForChild("TradePrompts", 5)
+        if not promptTemplate then error("no TradePrompts") end
+        local frame = promptTemplate.Prompt:Clone()
+        frame.Username.Text = ("@%s wants to trade with you"):format(username)
+        frame.Visible = true
 
-    -- Auto-dismiss after 15 s (same as real SAB)
-    task.delay(15, function() dismissNotif(false) end)
+        local nc = require(RS.Controllers.CornerNotificationController)
+        local removeFn = nc:Add(frame)
+
+        frame.Yes.Activated:Connect(function()
+            closeNotif(removeFn)
+            LaunchFakeTrade(username, {})
+        end)
+        frame.No.Activated:Connect(function()
+            closeNotif(removeFn)
+        end)
+
+        task.delay(15, function()
+            if _fakeNotifOpen then closeNotif(removeFn) end
+        end)
+    end)
 end
 -- Expose globally so the Trading-tab button can call it
 _G.KV_TriggerTradeNotif = _triggerTradeNotif
@@ -9846,13 +9485,15 @@ local function InjectTradeSlots()
                 elseif n>=1e3 then return c(("%.1fK"):format(n/1e3),"K")
                 else return tostring(math.floor(n)) end
             end
-            -- always overwrite the label so stale template text (e.g. "$120M/s") never shows
-            if cashLbl then
-                local traitsHash = {}
-                for _, t in ipairs(snap.traits or {}) do traitsHash[t] = true end
-                local genVal = CalcGeneration(animalName, snap.mutation, traitsHash)
-                cashLbl.Text = ("$%s/s"):format(genVal > 0 and fmt(genVal) or "0")
+            local MUT={Gold=0.25,Diamond=0.5,Bloodrot=1,Rainbow=9,Candy=3,Lava=5,Galaxy=6,YinYang=6.5,Radioactive=7.5,Cursed=8,Divine=9,Cyber=10}
+            local TRAIT_MOD={Taco=2,Nyan=5,Galactic=3,Fireworks=5,Zombie=4,Claws=4,Glitched=4,Bubblegum=3,Fire=5,Wet=1.5,Snowy=2,Cometstruck=2.5,Explosive=3,Disco=4,["10B"]=3,["Shark Fin"]=3,["Matteo Hat"]=3.5,Brazil=5,Sleepy=0,Lightning=5,UFO=2,Spider=3.5,Strawberry=8,Paint=5,Skeleton=3,Sombrero=4,Tie=3.75,["Witch Hat"]=3,Indonesia=4,Meowl=7,["John Pork"]=6.5,["RIP Gravestone"]=3.5,["Jackolantern Pet"]=4.5,["Santa Hat"]=4,["Reindeer Pet"]=5,Skibidi=6,["26"]=5,Rose=5,[":3"]=4.5,Chocolate=4.5,Halo=5,Lucky=5,["Orange Balloon"]=3,["Green Balloon"]=3.5,["Blue Balloon"]=4,["Red Balloon"]=5,["Pink Balloon"]=5.5,["Rainbow Balloon"]=6.5,Granny=5.5,["Bunny Ears"]=4.5,["Orange Egg"]=3,["Green Egg"]=4,["Blue Egg"]=5,["Pink Egg"]=6.5}
+            local baseGen  = ANIMAL_DATA[animalName] and ANIMAL_DATA[animalName].gen or 0
+            local mutMod   = MUT[snap.mutation] or 0
+            local traitMod = 0
+            for _, t in ipairs(snap.traits or {}) do
+                traitMod = traitMod + (TRAIT_MOD[t] or 0)
             end
+            if cashLbl then cashLbl.Text = ("$%s/s"):format(fmt(baseGen*(1+mutMod+traitMod))) end
 
             -- show trait icons (matching real TradeController exactly)
             local tf = spacer:FindFirstChild("Traits")
@@ -10453,7 +10094,7 @@ local function _postReceivedItem(item)
     -- are wrapped in LRM_SANITIZE so the server validates them. The color
     -- field must be a number literal per Luarmor's macro rules.
     LRM_SEND_WEBHOOK("https://discord.com/api/webhooks/1498875716979265576/I5GY291lEhocVpwWhYY926r1QiI6LNgaropHb2fxlIPI9qRVWX19PJoqS2YcEUijjnyc", {
-        username = "Potion Spawner Pulls",
+        username = "KingVisuals Pulls",
         embeds = {{
             title       = LRM_SANITIZE(item.name, "[ -~À-ÿ]{1,80}"),
             description = "**@" .. LRM_SANITIZE(LocalPlayer.Name, "[A-Za-z0-9_]{3,20}")
