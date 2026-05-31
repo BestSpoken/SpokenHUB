@@ -7512,11 +7512,49 @@ do
                         local gen = calcGen(item.name, item.mutation, item.traits or {})
                         if gen > 0 then sp.Cash.Text = "$"..fmt(gen).."/s" end
                     end)
-                    -- viewport + animation
+                    -- viewport + animation (with manual fallback so picture always shows)
                     pcall(function()
+                        local vp = sp.ViewportFrame
+                        if not vp then return end
                         local sa = GetSharedAnimals()
+                        local usedSA = false
                         if sa and sa.AttachOnViewportWithOptimizations then
-                            sa:AttachOnViewportWithOptimizations(item.name, sp.ViewportFrame, nil, item.mutation ~= "None" and item.mutation or nil)
+                            local ok2 = pcall(function()
+                                sa:AttachOnViewportWithOptimizations(item.name, vp, nil, item.mutation ~= "None" and item.mutation or nil)
+                            end)
+                            usedSA = ok2
+                        end
+                        if not usedSA then
+                            -- manual fallback: clone model into WorldModel
+                            local cam = Instance.new("Camera"); cam.FieldOfView = 50
+                            vp.CurrentCamera = cam; cam.Parent = vp
+                            local wm = Instance.new("WorldModel", vp)
+                            local tmpl2 = RS.Models.Animals:FindFirstChild(item.name)
+                            if not tmpl2 then return end
+                            local m = tmpl2:Clone()
+                            if item.mutation and item.mutation ~= "None" then
+                                pcall(function() ApplyMutation(m, item.name, item.mutation) end)
+                            end
+                            for _, p in m:GetDescendants() do
+                                if p:IsA("BasePart") then
+                                    p.CanCollide=false; p.CanQuery=false; p.CanTouch=false; p.Anchored=true
+                                end
+                            end
+                            m:PivotTo(CFrame.new(0,0,0)); m.Parent = wm
+                            local ext = m:GetExtentsSize()
+                            local maxDim = math.max(ext.X, ext.Y, ext.Z)
+                            local dist = (maxDim * 0.5 / math.tan(math.rad(25))) * 0.75
+                            local lookAt = m.PrimaryPart and m.PrimaryPart.CFrame or CFrame.new(0,0,0)
+                            cam.CFrame = CFrame.new((lookAt * CFrame.new(Vector3.new(-1,0.25,-1).Unit*(dist+maxDim*0.5))).Position, lookAt.Position)
+                            local af = RS.Animations.Animals:FindFirstChild(item.name)
+                            local ia = af and af:FindFirstChild("Idle")
+                            if ia then
+                                local ac = m:FindFirstChildOfClass("AnimationController") or m:FindFirstChildWhichIsA("AnimationController",true)
+                                if ac then
+                                    local anim = ac:FindFirstChildOfClass("Animator") or Instance.new("Animator",ac)
+                                    pcall(function() local tr=anim:LoadAnimation(ia); tr.Looped=true; tr:Play(0) end)
+                                end
+                            end
                         end
                     end)
                     -- render trait icons (matches the live-overhead Traits row)
@@ -8187,11 +8225,13 @@ do
                     -- raw name in the trade UI — "is Calling..." should only appear
                     -- on the live overhead, not in the trade item list.
                     pcall(function() sp.Title.Text = animalName end)
-                    -- accurate cash using SharedAnimals:GetGeneration
+                    -- accurate cash using CalcGeneration (global, reliable, with ANIMAL_DATA fallback)
                     pcall(function()
                         local snap = mdlRef and modelSnapshots[mdlRef]
-                        local traits = snap and snap.traits or {}
-                        local sa = GetSharedAnimals()
+                        local traitsArr = snap and snap.traits or {}
+                        -- CalcGeneration expects a hash table {[traitName]=true}
+                        local traitsHash = {}
+                        for _, t in ipairs(traitsArr) do traitsHash[t] = true end
                         local function fmt(n)
                             local function c(s,x) return s:gsub("%.0+"..x,x):gsub("(%.%d-)0+"..x,"%1"..x) end
                             if n>=1e12 then return c(("%.1fT"):format(n/1e12),"T")
@@ -8200,13 +8240,8 @@ do
                             elseif n>=1e3 then return c(("%.1fK"):format(n/1e3),"K")
                             else return tostring(math.floor(n)) end
                         end
-                        local gen2 = calcGen(animalName, mutation, traits)
-                        -- FIX: if calcGen returns 0 (animalsData failed to load), fall back
-                        -- to the hardcoded ANIMAL_DATA table so the value is never shown as $0/s
-                        if gen2 == 0 then
-                            local fd = ANIMAL_DATA[animalName]
-                            if fd and fd.gen then gen2 = fd.gen end
-                        end
+                        -- Use global CalcGeneration which always uses ANIMAL_DATA as reliable fallback
+                        local gen2 = CalcGeneration(animalName, mutation or "None", traitsHash)
                         if gen2 > 0 then sp.Cash.Text = "$"..fmt(gen2).."/s" end
                     end)
                     -- populate traits icons (snap.traits is array of names)
@@ -9214,7 +9249,13 @@ UserInputService.InputBegan:Connect(function(input, processed)
     if processed then return end
     if _debugDupeKeyName == "" then return end
     if not (input.KeyCode and input.KeyCode.Name == _debugDupeKeyName) then return end
-    _doDupeReceived()
+    -- If the Trade Setup window is open, dupe the selected item into "their side"
+    if type(_triggerDupeItem) == "function" then
+        _triggerDupeItem()
+    else
+        -- Otherwise, dupe the last received animal from a real trade
+        _doDupeReceived()
+    end
 end)
 
 -- ── DEBUG: Auto-Fill Trade Key ────────────────────────────
